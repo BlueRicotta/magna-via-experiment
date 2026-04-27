@@ -49,7 +49,10 @@ async function loadDashboard() {
     renderRows(rows.assessments || []);
     setStatus(`Connected to ${health.service || 'API'}.`, 'ok');
   } catch (error) {
-    setStatus(error.message, 'error');
+    const message = error instanceof TypeError && error.message === 'Failed to fetch'
+      ? 'Failed to fetch. Check the API URL and backend CORS_ORIGINS setting.'
+      : error.message;
+    setStatus(message, 'error');
   }
 }
 

@@ -20,7 +20,7 @@ func Load() Config {
 		AdminToken:     os.Getenv("ADMIN_TOKEN"),
 		DatabaseDriver: driver,
 		DatabaseDSN:    defaultDSN(driver),
-		CORSOrigins:    getenv("CORS_ORIGINS", "*"),
+		CORSOrigins:    normalizeCORSOrigins(getenv("CORS_ORIGINS", "*")),
 	}
 }
 
@@ -43,4 +43,23 @@ func defaultDSN(driver string) string {
 		return "tmp/magna-via.db"
 	}
 	return ""
+}
+
+func normalizeCORSOrigins(value string) string {
+	if strings.TrimSpace(value) == "*" {
+		return "*"
+	}
+
+	parts := strings.Split(value, ",")
+	origins := make([]string, 0, len(parts))
+	for _, part := range parts {
+		origin := strings.TrimRight(strings.TrimSpace(part), "/")
+		if origin != "" {
+			origins = append(origins, origin)
+		}
+	}
+	if len(origins) == 0 {
+		return "*"
+	}
+	return strings.Join(origins, ",")
 }
