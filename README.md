@@ -21,6 +21,14 @@ npm run start:tunnel
 
 Expo Go public-store compatibility depends on the SDK version. For remote testing, prefer EAS preview builds/TestFlight over Expo Go.
 
+The app submits completed assessments to:
+
+```txt
+EXPO_PUBLIC_API_BASE_URL=https://magna-via-production.up.railway.app
+```
+
+Override `EXPO_PUBLIC_API_BASE_URL` at build time if you deploy another backend.
+
 ## Backend Commands
 
 ```bash

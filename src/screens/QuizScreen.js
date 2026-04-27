@@ -267,7 +267,7 @@ function ChoiceCard({ choice, selected, onPress }) {
   );
 }
 
-export function QuizScreen({ savedAnswers = {}, onBack, onDone }) {
+export function QuizScreen({ savedAnswers = {}, submitting = false, submitError = '', onBack, onDone }) {
   const { width } = useWindowDimensions();
   const breakpoint = getBreakpoint(width);
   const desktop = breakpoint === 'desktop';
@@ -285,6 +285,7 @@ export function QuizScreen({ savedAnswers = {}, onBack, onDone }) {
   };
 
   const goBack = () => {
+    if (submitting) return;
     if (index === 0) {
       onBack();
       return;
@@ -293,7 +294,7 @@ export function QuizScreen({ savedAnswers = {}, onBack, onDone }) {
   };
 
   const goNext = () => {
-    if (!selected) return;
+    if (!selected || submitting) return;
     if (index === questions.length - 1) {
       onDone({
         answers,
@@ -351,9 +352,10 @@ export function QuizScreen({ savedAnswers = {}, onBack, onDone }) {
             </View>
 
             <View style={styles.ctaRow}>
-              <GoldButton onPress={goNext} disabled={!selected} style={styles.ctaButton}>
-                {index === questions.length - 1 ? 'LIHAT TAKDIR' : 'LANJUTKAN'}
+              <GoldButton onPress={goNext} disabled={!selected || submitting} style={styles.ctaButton}>
+                {submitting ? 'MENYIMPAN' : index === questions.length - 1 ? 'LIHAT TAKDIR' : 'LANJUTKAN'}
               </GoldButton>
+              {!!submitError && <Text style={styles.submitError}>{submitError}</Text>}
             </View>
           </View>
         </ScrollView>
@@ -581,8 +583,17 @@ const styles = StyleSheet.create({
   ctaRow: {
     alignItems: 'flex-end',
     marginTop: 18,
+    gap: 10,
   },
   ctaButton: {
     maxWidth: 360,
+  },
+  submitError: {
+    maxWidth: 360,
+    color: '#f0b8ae',
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'right',
   },
 });

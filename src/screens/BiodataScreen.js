@@ -28,6 +28,7 @@ const initialForm = {
   email: '',
   grade: '',
   gender: '',
+  consent: false,
 };
 
 function getBreakpoint(width) {
@@ -168,7 +169,11 @@ export function BiodataScreen({ user, onBack, onDone }) {
   const [openSelect, setOpenSelect] = useState(null);
 
   const valid = useMemo(
-    () => Object.values(form).every((value) => String(value || '').trim().length > 0),
+    () => (
+      form.consent &&
+      ['name', 'age', 'school', 'email', 'grade', 'gender']
+        .every((field) => String(form[field] || '').trim().length > 0)
+    ),
     [form],
   );
 
@@ -291,10 +296,23 @@ export function BiodataScreen({ user, onBack, onDone }) {
                 </View>
 
                 <View style={styles.ctaWrap}>
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: form.consent }}
+                    onPress={() => setField('consent', !form.consent)}
+                    style={({ pressed }) => [styles.consentRow, pressed && styles.consentRowPressed]}
+                  >
+                    <View style={[styles.consentBox, form.consent && styles.consentBoxChecked]}>
+                      {form.consent && <Text style={styles.consentCheck}>✓</Text>}
+                    </View>
+                    <Text style={styles.consentText}>
+                      Aku setuju data ini digunakan untuk menyimpan hasil perjalanan dan kebutuhan penelitian Magna Via.
+                    </Text>
+                  </Pressable>
                   <GoldButton onPress={submit} disabled={!valid} style={styles.submitButton}>
                     MASUK KE ARCADIA
                   </GoldButton>
-                  <Text style={styles.disclaimer}>Data kamu hanya digunakan untuk keperluan penelitian.</Text>
+                  <Text style={styles.disclaimer}>Data dapat dilihat oleh admin Magna Via dan tidak digunakan di luar kebutuhan pengujian aplikasi.</Text>
                 </View>
               </LinearGradient>
 
@@ -699,6 +717,51 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 22,
     zIndex: 1,
+  },
+  consentRow: {
+    width: '100%',
+    maxWidth: 520,
+    minHeight: 50,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: radii.md,
+    borderWidth: 0.5,
+    borderColor: 'rgba(232,208,144,0.16)',
+    backgroundColor: 'rgba(10,10,20,0.38)',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  consentRowPressed: {
+    borderColor: colors.gold,
+    backgroundColor: 'rgba(200,160,48,0.08)',
+  },
+  consentBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgInput,
+  },
+  consentBoxChecked: {
+    borderColor: colors.gold,
+    backgroundColor: colors.gold,
+  },
+  consentCheck: {
+    color: colors.textOnInvert,
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  consentText: {
+    flex: 1,
+    color: colors.textSecondary,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12,
+    lineHeight: 17,
   },
   submitButton: {
     maxWidth: '100%',

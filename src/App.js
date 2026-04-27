@@ -19,6 +19,7 @@ import { ResultRevealScreen } from './screens/ResultRevealScreen';
 import { ClassResultScreen } from './screens/ClassResultScreen';
 import { CenayangChatScreen } from './screens/CenayangChatScreen';
 import { resultFromScores } from './data/results';
+import { submitAssessment } from './services/api';
 import { colors, fonts } from './theme/tokens';
 
 export default function App() {
@@ -30,6 +31,11 @@ export default function App() {
     quizAnswers: {},
     quizScores: null,
     classId: null,
+    assessmentId: null,
+  });
+  const [submission, setSubmission] = useState({
+    loading: false,
+    error: '',
   });
   const [fontsLoaded] = useFonts({
     Cinzel: require('../assets/fonts/Cinzel-VariableFont_wght.ttf'),
@@ -83,19 +89,39 @@ export default function App() {
   }, []);
 
   const handleQuizBack = useCallback(() => {
+    if (submission.loading) return;
     setRoute('birthstar');
-  }, []);
+  }, [submission.loading]);
 
-  const handleQuizDone = useCallback(({ answers, scores }) => {
-    const result = resultFromScores(scores);
-    setAppState((current) => ({
-      ...current,
-      quizAnswers: answers,
-      quizScores: scores,
-      classId: result.klass.id,
-    }));
-    setRoute('reveal');
-  }, []);
+  const handleQuizDone = useCallback(async ({ answers, scores }) => {
+    if (submission.loading) return;
+
+    setSubmission({ loading: true, error: '' });
+    try {
+      const assessment = await submitAssessment({
+        user: appState.user,
+        hobbyCards: appState.hobbyCards,
+        birthStar: appState.birthStar,
+        quizAnswers: answers,
+      });
+      const fallback = resultFromScores(scores);
+      setAppState((current) => ({
+        ...current,
+        quizAnswers: answers,
+        quizScores: assessment.scores || scores,
+        classId: assessment.result?.id || fallback.klass.id,
+        assessmentId: assessment.id || null,
+      }));
+      setRoute('reveal');
+    } catch (error) {
+      setSubmission({
+        loading: false,
+        error: error?.message || 'Gagal menyimpan perjalananmu. Coba lagi.',
+      });
+      return;
+    }
+    setSubmission({ loading: false, error: '' });
+  }, [appState.birthStar, appState.hobbyCards, appState.user, submission.loading]);
 
   const handleRevealDone = useCallback(() => {
     setRoute('result');
@@ -117,7 +143,9 @@ export default function App() {
       quizAnswers: {},
       quizScores: null,
       classId: null,
+      assessmentId: null,
     });
+    setSubmission({ loading: false, error: '' });
     setRoute('splash');
   }, []);
 
@@ -157,6 +185,8 @@ export default function App() {
       ) : route === 'quiz' ? (
         <QuizScreen
           savedAnswers={appState.quizAnswers}
+          submitting={submission.loading}
+          submitError={submission.error}
           onBack={handleQuizBack}
           onDone={handleQuizDone}
         />
