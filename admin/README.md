@@ -31,3 +31,5 @@ https://api.magnavia.example
 ```
 
 The backend must allow the Vercel domain in `CORS_ORIGINS`.
+
+The deployed dashboard uses `admin/api/proxy.js` on Vercel for read-only admin requests. This avoids browser CORS issues by proxying dashboard reads through the same Vercel origin.

@@ -57,7 +57,7 @@ async function loadDashboard() {
 }
 
 async function apiFetch(path) {
-  const response = await fetch(`${cleanBaseUrl()}${path}`, {
+  const response = await fetch(requestUrl(path), {
     headers: {
       Accept: 'application/json',
       ...(els.adminToken.value.trim() ? { 'X-Admin-Token': els.adminToken.value.trim() } : {}),
@@ -69,6 +69,22 @@ async function apiFetch(path) {
     throw new Error(payload.error || `Request failed: ${response.status}`);
   }
   return payload;
+}
+
+function requestUrl(path) {
+  if (shouldUseProxy()) {
+    const params = new URLSearchParams({
+      baseUrl: cleanBaseUrl(),
+      path,
+    });
+    return `/api/proxy?${params.toString()}`;
+  }
+  return `${cleanBaseUrl()}${path}`;
+}
+
+function shouldUseProxy() {
+  return window.location.protocol === 'https:' &&
+    window.location.hostname.endsWith('vercel.app');
 }
 
 function cleanBaseUrl() {

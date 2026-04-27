@@ -172,6 +172,20 @@ func TestAdminAssessmentsReturnsSubmittedRows(t *testing.T) {
 	}
 }
 
+func TestAllowOriginHandlesCommaSeparatedValuesAndTrailingSlash(t *testing.T) {
+	allow := allowOrigin("https://magna-via-admin.vercel.app/, http://localhost:8090")
+
+	if !allow("https://magna-via-admin.vercel.app") {
+		t.Fatal("expected admin origin to be allowed")
+	}
+	if !allow("http://localhost:8090/") {
+		t.Fatal("expected localhost origin with trailing slash to be allowed")
+	}
+	if allow("https://example.com") {
+		t.Fatal("expected unknown origin to be blocked")
+	}
+}
+
 func testApp(t *testing.T, options ...Option) *fiber.App {
 	t.Helper()
 

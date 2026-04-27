@@ -41,9 +41,9 @@ func New(dataStore store.AssessmentStore, corsOrigins string, options ...Option)
 	})
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: corsOrigins,
-		AllowHeaders: "Origin, Content-Type, Accept, X-Admin-Token",
-		AllowMethods: "GET,POST,OPTIONS",
+		AllowOriginsFunc: allowOrigin(corsOrigins),
+		AllowHeaders:     "Origin, Content-Type, Accept, X-Admin-Token",
+		AllowMethods:     "GET,POST,OPTIONS",
 	}))
 
 	app.Get("/healthz", s.healthz)
@@ -270,4 +270,22 @@ func errorHandler(c *fiber.Ctx, err error) error {
 	return c.Status(code).JSON(fiber.Map{
 		"error": message,
 	})
+}
+
+func allowOrigin(configured string) func(string) bool {
+	allowed := map[string]bool{}
+	for _, raw := range strings.Split(configured, ",") {
+		origin := strings.TrimRight(strings.TrimSpace(raw), "/")
+		if origin != "" {
+			allowed[origin] = true
+		}
+	}
+
+	return func(origin string) bool {
+		origin = strings.TrimRight(strings.TrimSpace(origin), "/")
+		if allowed["*"] || origin == "" {
+			return true
+		}
+		return allowed[origin]
+	}
 }
