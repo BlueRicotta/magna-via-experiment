@@ -13,6 +13,7 @@
     "web": "expo start --web --localhost --port 8090",
     "doctor": "expo-doctor",
     "api:dev": "cd backend && GOCACHE=/tmp/magna-via-go-cache go run ./cmd/api",
+    "api:dev:mysql": "cd backend && DB_DRIVER=mysql DATABASE_DSN='magnavia:magnavia@tcp(127.0.0.1:3306)/magnavia?charset=utf8mb4&parseTime=True&loc=Local' GOCACHE=/tmp/magna-via-go-cache go run ./cmd/api",
     "api:test": "cd backend && GOCACHE=/tmp/magna-via-go-cache go test ./..."
   },
   "dependencies": {

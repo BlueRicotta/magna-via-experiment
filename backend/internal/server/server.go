@@ -1,19 +1,21 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 
 	"magnavia/backend/internal/domain"
 	"magnavia/backend/internal/store"
 )
 
 type Server struct {
-	store      *store.Memory
+	store      store.AssessmentStore
 	adminToken string
 }
 
@@ -25,90 +27,65 @@ func WithAdminToken(token string) Option {
 	}
 }
 
-type healthResponse struct {
-	OK      bool   `json:"ok"`
-	Service string `json:"service"`
-}
-
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
-func New(options ...Option) http.Handler {
+func New(dataStore store.AssessmentStore, corsOrigins string, options ...Option) *fiber.App {
 	s := &Server{
-		store: store.NewMemory(),
+		store: dataStore,
 	}
 	for _, option := range options {
 		option(s)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", s.healthz)
-	mux.HandleFunc("/api/v1/catalog/classes", s.classes)
-	mux.HandleFunc("/api/v1/assessments", s.assessments)
-	mux.HandleFunc("/api/v1/assessments/", s.assessmentByID)
-	mux.HandleFunc("/api/v1/chat/messages", s.chatMessage)
-	mux.HandleFunc("/api/v1/admin/summary", s.adminSummary)
+	app := fiber.New(fiber.Config{
+		AppName:      "Magna Via API",
+		ErrorHandler: errorHandler,
+	})
+	app.Use(recover.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: corsOrigins,
+		AllowHeaders: "Origin, Content-Type, Accept, X-Admin-Token",
+		AllowMethods: "GET,POST,OPTIONS",
+	}))
 
-	return s.withCORS(mux)
+	app.Get("/healthz", s.healthz)
+
+	api := app.Group("/api/v1")
+	api.Get("/catalog/classes", s.classes)
+	api.Post("/assessments", s.createAssessment)
+	api.Get("/assessments/:id", s.getAssessment)
+	api.Post("/chat/messages", s.chatMessage)
+	api.Get("/admin/summary", s.adminSummary)
+	api.Get("/admin/assessments", s.adminAssessments)
+
+	return app
 }
 
-func (s *Server) withCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
+func (s *Server) healthz(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"ok":      true,
+		"service": "magna-via-api",
 	})
 }
 
-func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) {
-		return
-	}
-	writeJSON(w, http.StatusOK, healthResponse{
-		OK:      true,
-		Service: "magna-via-api",
-	})
-}
-
-func (s *Server) classes(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) {
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
+func (s *Server) classes(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
 		"classes": domain.ClassCatalog(),
 	})
 }
 
-func (s *Server) assessments(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPost) {
-		return
-	}
-
+func (s *Server) createAssessment(c *fiber.Ctx) error {
 	var req domain.AssessmentRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid JSON body")
 	}
-
 	if err := validateAssessmentRequest(req); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	scores, invalid := domain.ScoreAnswers(req.QuizAnswers)
 	if len(invalid) > 0 {
-		writeError(w, http.StatusBadRequest, "invalid quiz answers for questions: "+strings.Join(invalid, ", "))
-		return
+		return fiber.NewError(fiber.StatusBadRequest, "invalid quiz answers for questions: "+strings.Join(invalid, ", "))
 	}
 
-	top := domain.TopDimensions(scores)
-	result := domain.PickClass(scores)
 	assessment := domain.Assessment{
 		CreatedAt:     time.Now().UTC(),
 		Biodata:       req.Biodata,
@@ -116,83 +93,74 @@ func (s *Server) assessments(w http.ResponseWriter, r *http.Request) {
 		BirthStar:     req.BirthStar,
 		QuizAnswers:   req.QuizAnswers,
 		Scores:        scores,
-		TopDimensions: top,
-		Result:        result,
+		TopDimensions: domain.TopDimensions(scores),
+		Result:        domain.PickClass(scores),
 	}
 
-	writeJSON(w, http.StatusCreated, s.store.SaveAssessment(assessment))
+	saved, err := s.store.SaveAssessment(c.Context(), assessment)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusCreated).JSON(saved)
 }
 
-func (s *Server) assessmentByID(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) {
-		return
-	}
-
-	id := strings.TrimPrefix(r.URL.Path, "/api/v1/assessments/")
-	if id == "" || strings.Contains(id, "/") {
-		writeError(w, http.StatusNotFound, "assessment not found")
-		return
-	}
-
-	assessment, err := s.store.GetAssessment(id)
+func (s *Server) getAssessment(c *fiber.Ctx) error {
+	assessment, err := s.store.GetAssessment(c.Context(), c.Params("id"))
 	if errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "assessment not found")
-		return
+		return fiber.NewError(fiber.StatusNotFound, "assessment not found")
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to load assessment")
-		return
+		return err
 	}
-	writeJSON(w, http.StatusOK, assessment)
+	return c.JSON(assessment)
 }
 
-func (s *Server) chatMessage(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPost) {
-		return
-	}
-
+func (s *Server) chatMessage(c *fiber.Ctx) error {
 	var req domain.ChatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid JSON body")
 	}
 	if strings.TrimSpace(req.Message) == "" {
-		writeError(w, http.StatusBadRequest, "message is required")
-		return
+		return fiber.NewError(fiber.StatusBadRequest, "message is required")
 	}
 
-	var result domain.ClassResult
+	result := domain.ClassCatalog()[0]
 	if req.AssessmentID != "" {
-		assessment, err := s.store.GetAssessment(req.AssessmentID)
+		assessment, err := s.store.GetAssessment(c.Context(), req.AssessmentID)
 		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "assessment not found")
-			return
+			return fiber.NewError(fiber.StatusNotFound, "assessment not found")
 		}
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to load assessment")
-			return
+			return err
 		}
 		result = assessment.Result
 	}
-	if result.ID == "" {
-		result = domain.ClassCatalog()[0]
-	}
 
-	writeJSON(w, http.StatusOK, domain.ChatResponse{
-		Reply: "Cenayang melihat resonansi " + result.Name + ". Untuk saat ini ini masih jawaban dummy, tapi konteks hasilmu sudah dikirim ke backend.",
+	_ = s.store.SaveChatMessage(c.Context(), store.ChatMessage{
+		AssessmentID: req.AssessmentID,
+		Sender:       "user",
+		Message:      req.Message,
 	})
+	reply := "Cenayang melihat resonansi " + result.Name + ". Untuk saat ini ini masih jawaban dummy, tapi konteks hasilmu sudah dikirim ke backend."
+	_ = s.store.SaveChatMessage(c.Context(), store.ChatMessage{
+		AssessmentID: req.AssessmentID,
+		Sender:       "oracle",
+		Message:      reply,
+	})
+
+	return c.JSON(domain.ChatResponse{Reply: reply})
 }
 
-func (s *Server) adminSummary(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) {
-		return
-	}
-	if !s.authorizedAdmin(r) {
-		writeError(w, http.StatusUnauthorized, "admin token required")
-		return
+func (s *Server) adminSummary(c *fiber.Ctx) error {
+	if !s.authorizedAdmin(c) {
+		return fiber.NewError(fiber.StatusUnauthorized, "admin token required")
 	}
 
-	assessments := s.store.ListAssessments()
+	assessments, err := s.store.ListAssessments(c.Context())
+	if err != nil {
+		return err
+	}
+
 	classCounts := map[string]int{}
 	dimensionTotals := domain.BlankScores()
 	for _, assessment := range assessments {
@@ -202,18 +170,66 @@ func (s *Server) adminSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
+	return c.JSON(fiber.Map{
 		"totalAssessments": len(assessments),
 		"classCounts":      classCounts,
 		"dimensionTotals":  dimensionTotals,
 	})
 }
 
-func (s *Server) authorizedAdmin(r *http.Request) bool {
+func (s *Server) adminAssessments(c *fiber.Ctx) error {
+	if !s.authorizedAdmin(c) {
+		return fiber.NewError(fiber.StatusUnauthorized, "admin token required")
+	}
+
+	assessments, err := s.store.ListAssessments(c.Context())
+	if err != nil {
+		return err
+	}
+
+	type row struct {
+		ID            string             `json:"id"`
+		CreatedAt     time.Time          `json:"createdAt"`
+		FullName      string             `json:"fullName"`
+		Email         string             `json:"email"`
+		Grade         string             `json:"grade"`
+		School        string             `json:"school"`
+		Gender        string             `json:"gender"`
+		BirthStar     string             `json:"birthStar"`
+		HobbyCards    []string           `json:"hobbyCards"`
+		Scores        map[string]int     `json:"scores"`
+		TopDimensions []string           `json:"topDimensions"`
+		Result        domain.ClassResult `json:"result"`
+	}
+
+	rows := make([]row, 0, len(assessments))
+	for _, assessment := range assessments {
+		rows = append(rows, row{
+			ID:            assessment.ID,
+			CreatedAt:     assessment.CreatedAt,
+			FullName:      assessment.Biodata.FullName,
+			Email:         assessment.Biodata.Email,
+			Grade:         assessment.Biodata.Grade,
+			School:        assessment.Biodata.School,
+			Gender:        assessment.Biodata.Gender,
+			BirthStar:     assessment.BirthStar,
+			HobbyCards:    assessment.HobbyCards,
+			Scores:        map[string]int(assessment.Scores),
+			TopDimensions: assessment.TopDimensions,
+			Result:        assessment.Result,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"assessments": rows,
+	})
+}
+
+func (s *Server) authorizedAdmin(c *fiber.Ctx) bool {
 	if s.adminToken == "" {
 		return true
 	}
-	return r.Header.Get("X-Admin-Token") == s.adminToken
+	return c.Get("X-Admin-Token") == s.adminToken
 }
 
 func validateAssessmentRequest(req domain.AssessmentRequest) error {
@@ -241,21 +257,17 @@ func validateAssessmentRequest(req domain.AssessmentRequest) error {
 	return nil
 }
 
-func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
-	if r.Method == method {
-		return true
+func errorHandler(c *fiber.Ctx, err error) error {
+	code := fiber.StatusInternalServerError
+	message := "internal server error"
+
+	var fiberErr *fiber.Error
+	if errors.As(err, &fiberErr) {
+		code = fiberErr.Code
+		message = fiberErr.Message
 	}
-	w.Header().Set("Allow", method)
-	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-	return false
-}
 
-func writeJSON(w http.ResponseWriter, status int, body any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(body)
-}
-
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, errorResponse{Error: message})
+	return c.Status(code).JSON(fiber.Map{
+		"error": message,
+	})
 }

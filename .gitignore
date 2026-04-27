@@ -20,3 +20,8 @@ project/
 # Environment secrets
 .env
 .env.*
+!.env.example
+!backend/.env.example
+
+# Local backend data
+backend/tmp/

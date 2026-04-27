@@ -6,7 +6,8 @@
 - Go backend scaffolded in `backend/` with `GET /healthz`.
 - Design handoff remains untouched in `project/`.
 - Runtime image assets are separated in `assets/images/` as WebP variants for Expo/mobile performance.
-- Backend first API slice implemented with in-memory storage, RIASEC scoring, assessment submission, class catalog, dummy chat, and admin summary.
+- Backend first API slice implemented with Fiber, GORM persistence, MySQL support, SQLite local fallback, RIASEC scoring, assessment submission, class catalog, dummy chat, and admin summary.
+- Static admin dashboard scaffolded in `admin/` for Vercel/local checks.
 
 ## Screens
 

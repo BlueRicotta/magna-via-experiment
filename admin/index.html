@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Magna Via Admin</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">Magna Via</p>
+          <h1>Admin Dashboard</h1>
+        </div>
+        <nav class="nav">
+          <a href="#overview" class="is-active">Overview</a>
+          <a href="#submissions">Submissions</a>
+          <a href="#settings">Connection</a>
+        </nav>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Arcadia Assessment</p>
+            <h2>Operational Overview</h2>
+          </div>
+          <button id="refreshButton" class="primary-button" type="button">Refresh</button>
+        </header>
+
+        <section id="settings" class="panel settings-panel">
+          <div>
+            <h3>API Connection</h3>
+            <p>Use your local backend during development or your deployed backend URL later.</p>
+          </div>
+          <form id="settingsForm" class="settings-form">
+            <label>
+              API Base URL
+              <input id="apiBaseUrl" name="apiBaseUrl" type="url" placeholder="http://localhost:8080" />
+            </label>
+            <label>
+              Admin Token
+              <input id="adminToken" name="adminToken" type="password" placeholder="Optional for local dev" />
+            </label>
+            <button class="secondary-button" type="submit">Save Connection</button>
+          </form>
+        </section>
+
+        <p id="status" class="status">Ready.</p>
+
+        <section id="overview" class="metrics-grid">
+          <article class="metric-card">
+            <span>Total Submissions</span>
+            <strong id="totalAssessments">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Top Class</span>
+            <strong id="topClass">-</strong>
+          </article>
+          <article class="metric-card">
+            <span>Top Dimension</span>
+            <strong id="topDimension">-</strong>
+          </article>
+        </section>
+
+        <section class="split-grid">
+          <article class="panel">
+            <h3>Class Distribution</h3>
+            <div id="classDistribution" class="stack-list"></div>
+          </article>
+          <article class="panel">
+            <h3>RIASEC Totals</h3>
+            <div id="dimensionTotals" class="stack-list"></div>
+          </article>
+        </section>
+
+        <section id="submissions" class="panel table-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Recent Submissions</h3>
+              <p>Latest assessment records from the backend.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Grade</th>
+                  <th>Birth Star</th>
+                  <th>Result</th>
+                  <th>Top RIASEC</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
+              <tbody id="submissionsBody">
+                <tr>
+                  <td colspan="6" class="empty">No data loaded yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

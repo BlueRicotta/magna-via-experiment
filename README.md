@@ -7,6 +7,7 @@ React Native + Expo mobile app with a Go backend for the Magna Via Arcadia/RIASE
 - `src/` - Expo app source.
 - `assets/` - runtime fonts and optimized WebP app images.
 - `backend/` - Go API service.
+- `admin/` - static admin dashboard for Vercel.
 - `project/` - local prototype/design archive, ignored by Git.
 
 ## App Commands
@@ -27,7 +28,23 @@ npm run api:dev
 npm run api:test
 ```
 
-The backend currently stores assessments in memory. Data survives while the Go process is running, but disappears after restart. A database layer is the next production step.
+By default, `api:dev` uses a local SQLite file at `backend/tmp/magna-via.db` so the API can run without extra setup.
+
+For MySQL local development:
+
+```bash
+docker compose up -d mysql
+npm run api:dev:mysql
+```
+
+Production should set:
+
+```txt
+DB_DRIVER=mysql
+DATABASE_DSN=user:pass@tcp(host:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+ADMIN_TOKEN=...
+CORS_ORIGINS=https://your-admin.vercel.app
+```
 
 ## Backend API
 
@@ -37,5 +54,10 @@ The backend currently stores assessments in memory. Data survives while the Go p
 - `GET /api/v1/assessments/{id}`
 - `POST /api/v1/chat/messages`
 - `GET /api/v1/admin/summary`
+- `GET /api/v1/admin/assessments`
 
 Set `ADMIN_TOKEN` to protect admin routes.
+
+## Admin Dashboard
+
+Open `admin/index.html` for local checks, or deploy the `admin/` folder to Vercel as a static site. The dashboard stores API URL and admin token in browser local storage.

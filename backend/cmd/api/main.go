@@ -2,26 +2,29 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"os"
 
+	"magnavia/backend/internal/config"
+	"magnavia/backend/internal/database"
 	"magnavia/backend/internal/server"
+	"magnavia/backend/internal/store"
 )
 
 func main() {
-	addr := ":" + getenv("PORT", "8080")
-	handler := server.New(server.WithAdminToken(os.Getenv("ADMIN_TOKEN")))
+	cfg := config.Load()
 
-	log.Printf("Magna Via API listening on %s", addr)
-	if err := http.ListenAndServe(addr, handler); err != nil {
+	db, err := database.Open(cfg)
+	if err != nil {
 		log.Fatal(err)
 	}
-}
 
-func getenv(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
+	app := server.New(
+		store.NewGorm(db),
+		cfg.CORSOrigins,
+		server.WithAdminToken(cfg.AdminToken),
+	)
+
+	log.Printf("Magna Via API listening on :%s (%s)", cfg.Port, cfg.DatabaseDriver)
+	if err := app.Listen(":" + cfg.Port); err != nil {
+		log.Fatal(err)
 	}
-	return value
 }
