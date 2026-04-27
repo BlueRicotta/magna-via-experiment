@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Magna Via",
+    "slug": "magna-via",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "magnavia",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "assets/images/**/*",
+      "assets/fonts/**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a14"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "backgroundColor": "#050509"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+export const colors = {
+  bgPrimary: '#0a0a14',
+  bgSurface: '#14141e',
+  bgCard: '#1e1e30',
+  bgInput: '#0e0e1a',
+  border: '#2a2a40',
+  borderSoft: '#1e1e34',
+  textPrimary: '#e8e0d0',
+  textSecondary: '#c8b890',
+  textMuted: '#887870',
+  textDisabled: '#3a3450',
+  textOnInvert: '#1a0e00',
+  gold: '#c8a030',
+  goldHi: '#e8d090',
+  goldLo: '#8a6e20',
+  purple: '#5a3a8a',
+  ember: '#c86030',
+  ignis: '#c83020',
+  aqua: '#2060c8',
+  terra: '#309050',
+  ventus: '#7030c0',
+};
+
+export const fonts = {
+  display: 'Cinzel',
+  oracle: 'CrimsonText',
+  oracleItalic: 'CrimsonTextItalic',
+  oracleSemiBold: 'CrimsonTextSemiBold',
+  oracleBold: 'CrimsonTextBold',
+  body: 'Nunito_400Regular',
+  bodyMedium: 'Nunito_500Medium',
+  bodySemiBold: 'Nunito_600SemiBold',
+  bodyBold: 'Nunito_700Bold',
+};
+
+export const radii = {
+  sm: 6,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  pill: 999,
+};

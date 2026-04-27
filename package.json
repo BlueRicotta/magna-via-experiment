@@ -1,0 +1,33 @@
+{
+  "name": "magna-via-experiment",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start --lan",
+    "start:local": "expo start --localhost",
+    "start:lan": "expo start --lan",
+    "start:tunnel": "expo start --tunnel",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web --localhost --port 8090",
+    "doctor": "expo-doctor",
+    "api:dev": "cd backend && GOCACHE=/tmp/magna-via-go-cache go run ./cmd/api",
+    "api:test": "cd backend && GOCACHE=/tmp/magna-via-go-cache go test ./..."
+  },
+  "dependencies": {
+    "@expo-google-fonts/nunito": "^0.4.2",
+    "expo": "^55.0.17",
+    "expo-font": "^55.0.6",
+    "expo-linear-gradient": "^55.0.13",
+    "expo-status-bar": "^55.0.5",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.6",
+    "react-native-svg": "15.15.3",
+    "react-native-web": "^0.21.0"
+  },
+  "devDependencies": {
+    "expo-doctor": "^1.18.19"
+  }
+}
