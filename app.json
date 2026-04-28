@@ -11,9 +11,13 @@
       "assets/fonts/**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bluericotta.magnavia",
+      "buildNumber": "1"
     },
     "android": {
+      "package": "com.bluericotta.magnavia",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#0a0a14"
       }
@@ -21,6 +25,11 @@
     "web": {
       "bundler": "metro",
       "backgroundColor": "#050509"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fb9940c1-bfd9-43f6-a48e-90e666052062"
+      }
     }
   }
 }

@@ -8,6 +8,7 @@ React Native + Expo mobile app with a Go backend for the Magna Via Arcadia/RIASE
 - `assets/` - runtime fonts and optimized WebP app images.
 - `backend/` - Go API service.
 - `admin/` - static admin dashboard for Vercel.
+- `docs/` - deployment and repository notes.
 - `project/` - local prototype/design archive, ignored by Git.
 
 ## App Commands
@@ -28,6 +29,36 @@ EXPO_PUBLIC_API_BASE_URL=https://magna-via-production.up.railway.app
 ```
 
 Override `EXPO_PUBLIC_API_BASE_URL` at build time if you deploy another backend.
+
+## EAS Builds
+
+This repo includes `eas.json` with:
+
+- `preview` - internal distribution, Android APK, production-like app behavior.
+- `production` - store-ready build profile, Android AAB.
+
+First-time setup:
+
+```bash
+npm install -g eas-cli
+eas login
+eas build:configure
+```
+
+Build Android preview:
+
+```bash
+eas build --platform android --profile preview
+```
+
+For iOS internal testing, you also need an Apple Developer account and registered test devices:
+
+```bash
+eas device:create
+eas build --platform ios --profile preview
+```
+
+More detailed deployment notes are in `docs/DEPLOYMENT.md`.
 
 ## Backend Commands
 
@@ -76,4 +107,4 @@ Set `ADMIN_TOKEN` or `ADMIN_PASSWORD` to protect admin routes.
 
 ## Admin Dashboard
 
-Open `admin/index.html` for local checks, or deploy the `admin/` folder to Vercel as a static site. The dashboard stores API URL and admin token in browser local storage.
+Open `admin/index.html` for local checks, or deploy the `admin/` folder to Vercel as a static site. The dashboard stores the API URL and a short-lived admin session in browser local storage.

@@ -7,6 +7,9 @@ dist/
 web-build/
 android/
 ios/
+*.apk
+*.aab
+*.ipa
 
 # Local design archive from the prototype handoff.
 # Runtime assets/fonts now live in ./assets.

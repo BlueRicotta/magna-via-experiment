@@ -12,6 +12,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web --localhost --port 8090",
     "doctor": "expo-doctor",
+    "eas:preview:android": "eas build --platform android --profile preview",
+    "eas:preview:ios": "eas build --platform ios --profile preview",
+    "eas:production:android": "eas build --platform android --profile production",
     "api:dev": "cd backend && GOCACHE=/tmp/magna-via-go-cache go run ./cmd/api",
     "api:dev:mysql": "cd backend && DB_DRIVER=mysql DATABASE_DSN='magnavia:magnavia@tcp(127.0.0.1:3306)/magnavia?charset=utf8mb4&parseTime=True&loc=Local' GOCACHE=/tmp/magna-via-go-cache go run ./cmd/api",
     "api:test": "cd backend && GOCACHE=/tmp/magna-via-go-cache go test ./..."
