@@ -132,7 +132,7 @@ func (s *Server) createAssessment(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	scores, invalid := domain.ScoreAnswers(req.QuizAnswers)
+	scores, invalid := domain.ScoreAssessment(req.QuizAnswers, req.HobbyCards, req.BirthStar)
 	if len(invalid) > 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid quiz answers for questions: "+strings.Join(invalid, ", "))
 	}

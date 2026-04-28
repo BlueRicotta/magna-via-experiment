@@ -136,6 +136,22 @@ export function blankScores() {
   return dimensions.reduce((acc, dim) => ({ ...acc, [dim]: 0 }), {});
 }
 
+export const hobbyCardBonuses = {
+  fighter: { R: 2, E: 1 },
+  scholar: { I: 2, C: 1 },
+  artist: { A: 2, S: 1 },
+  guardian: { S: 2, I: 1 },
+  leader: { E: 2, S: 1 },
+  keeper: { C: 2, I: 1 },
+};
+
+export const birthStarBonuses = {
+  ignis: { R: 1, E: 1 },
+  aqua: { S: 1, I: 1 },
+  terra: { C: 1, R: 1 },
+  ventus: { A: 1, I: 1 },
+};
+
 export function scoreAnswers(answers) {
   const scores = blankScores();
   Object.values(answers || {}).forEach((answer) => {
@@ -144,6 +160,25 @@ export function scoreAnswers(answers) {
     }
   });
   return scores;
+}
+
+export function applyPersonalizationBonuses(scores, hobbyCards = [], birthStar = '') {
+  const personalized = { ...blankScores(), ...(scores || {}) };
+  hobbyCards.forEach((card) => addBonus(personalized, hobbyCardBonuses[String(card || '').trim().toLowerCase()]));
+  addBonus(personalized, birthStarBonuses[String(birthStar || '').trim().toLowerCase()]);
+  return personalized;
+}
+
+export function scoreAssessment(answers, hobbyCards = [], birthStar = '') {
+  return applyPersonalizationBonuses(scoreAnswers(answers), hobbyCards, birthStar);
+}
+
+function addBonus(scores, bonus) {
+  Object.entries(bonus || {}).forEach(([dim, points]) => {
+    if (scores[dim] !== undefined) {
+      scores[dim] += points;
+    }
+  });
 }
 
 export function getTopDimensions(scores = {}) {

@@ -12,7 +12,7 @@ import { QuizScreen } from './screens/QuizScreen';
 import { ResultRevealScreen } from './screens/ResultRevealScreen';
 import { ClassResultScreen } from './screens/ClassResultScreen';
 import { CenayangChatScreen } from './screens/CenayangChatScreen';
-import { resultFromScores } from './data/results';
+import { applyPersonalizationBonuses, resultFromScores } from './data/results';
 import { submitAssessment } from './services/api';
 import { colors, fonts } from './theme/tokens';
 
@@ -100,11 +100,16 @@ export default function App() {
         birthStar: appState.birthStar,
         quizAnswers: answers,
       });
-      const fallback = resultFromScores(scores);
+      const fallbackScores = applyPersonalizationBonuses(
+        scores,
+        appState.hobbyCards,
+        appState.birthStar,
+      );
+      const fallback = resultFromScores(fallbackScores);
       setAppState((current) => ({
         ...current,
         quizAnswers: answers,
-        quizScores: assessment.scores || scores,
+        quizScores: assessment.scores || fallbackScores,
         classId: assessment.result?.id || fallback.klass.id,
         assessmentId: assessment.id || null,
       }));

@@ -34,6 +34,37 @@ func TestScoreAnswersReportsInvalidQuestions(t *testing.T) {
 	}
 }
 
+func TestScoreAssessmentAppliesHobbyAndBirthStarBonuses(t *testing.T) {
+	scores, invalid := ScoreAssessment(
+		map[string]QuizAnswer{
+			"1": {Letter: "A"},
+			"2": {Letter: "B"},
+			"3": {Letter: "C"},
+		},
+		[]string{"fighter", "leader", "keeper"},
+		"ignis",
+	)
+
+	if len(invalid) != 0 {
+		t.Fatalf("expected no invalid answers, got %v", invalid)
+	}
+	if scores["R"] != 5 {
+		t.Fatalf("expected R score 5 after fighter and ignis bonuses, got %d", scores["R"])
+	}
+	if scores["I"] != 4 {
+		t.Fatalf("expected I score 4 after keeper bonus, got %d", scores["I"])
+	}
+	if scores["S"] != 1 {
+		t.Fatalf("expected S score 1 after leader bonus, got %d", scores["S"])
+	}
+	if scores["E"] != 7 {
+		t.Fatalf("expected E score 7 after fighter, leader, and ignis bonuses, got %d", scores["E"])
+	}
+	if scores["C"] != 2 {
+		t.Fatalf("expected C score 2 after keeper bonus, got %d", scores["C"])
+	}
+}
+
 func TestPickClassReturnsRIASECResult(t *testing.T) {
 	result := PickClass(Scores{
 		"R": 2,

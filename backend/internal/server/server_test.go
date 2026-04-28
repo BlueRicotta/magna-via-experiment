@@ -47,8 +47,8 @@ func TestCreateAndReadAssessment(t *testing.T) {
 	if created.ID == "" {
 		t.Fatal("expected generated id")
 	}
-	if created.Scores["R"] != 20 {
-		t.Fatalf("expected all-A fixture to score R=20, got %d", created.Scores["R"])
+	if created.Scores["R"] != 23 {
+		t.Fatalf("expected all-A fixture with personalization to score R=23, got %d", created.Scores["R"])
 	}
 	if created.Result.ID == "" {
 		t.Fatal("expected result id")

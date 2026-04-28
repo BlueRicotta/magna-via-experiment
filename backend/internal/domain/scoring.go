@@ -105,6 +105,22 @@ var AnswerKey = map[string]map[string]answerMeta{
 	},
 }
 
+var HobbyCardBonuses = map[string]Scores{
+	"fighter":  {"R": 2, "E": 1},
+	"scholar":  {"I": 2, "C": 1},
+	"artist":   {"A": 2, "S": 1},
+	"guardian": {"S": 2, "I": 1},
+	"leader":   {"E": 2, "S": 1},
+	"keeper":   {"C": 2, "I": 1},
+}
+
+var BirthStarBonuses = map[string]Scores{
+	"ignis":  {"R": 1, "E": 1},
+	"aqua":   {"S": 1, "I": 1},
+	"terra":  {"C": 1, "R": 1},
+	"ventus": {"A": 1, "I": 1},
+}
+
 type classProfile struct {
 	Result  ClassResult
 	Profile map[string]float64
@@ -246,6 +262,27 @@ func ScoreAnswers(answers map[string]QuizAnswer) (Scores, []string) {
 
 	sort.Strings(invalid)
 	return scores, invalid
+}
+
+func ScoreAssessment(answers map[string]QuizAnswer, hobbyCards []string, birthStar string) (Scores, []string) {
+	scores, invalid := ScoreAnswers(answers)
+	ApplyPersonalizationBonuses(scores, hobbyCards, birthStar)
+	return scores, invalid
+}
+
+func ApplyPersonalizationBonuses(scores Scores, hobbyCards []string, birthStar string) {
+	for _, card := range hobbyCards {
+		applyBonus(scores, HobbyCardBonuses[strings.ToLower(strings.TrimSpace(card))])
+	}
+	applyBonus(scores, BirthStarBonuses[strings.ToLower(strings.TrimSpace(birthStar))])
+}
+
+func applyBonus(scores Scores, bonus Scores) {
+	for dim, points := range bonus {
+		if contains(Dimensions, dim) {
+			scores[dim] += points
+		}
+	}
 }
 
 func TopDimensions(scores Scores) []string {

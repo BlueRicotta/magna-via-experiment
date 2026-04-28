@@ -105,6 +105,10 @@ Admin routes accept either the legacy `X-Admin-Token` header or a signed session
 
 Set `ADMIN_TOKEN` or `ADMIN_PASSWORD` to protect admin routes.
 
+## Scoring
+
+Final RIASEC scores are calculated from quiz answers plus light personalization bonuses from Hobby Cards and Birth Star. See `docs/SCORING.md`.
+
 ## Admin Dashboard
 
 Open `admin/index.html` for local checks, or deploy the `admin/` folder to Vercel as a static site. The dashboard stores the API URL and a short-lived admin session in browser local storage.
