@@ -51,8 +51,15 @@ Production should set:
 DB_DRIVER=mysql
 DATABASE_DSN=user:pass@tcp(host:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
 ADMIN_TOKEN=...
-CORS_ORIGINS=https://your-admin.vercel.app
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=...
+ADMIN_SESSION_SECRET=...
+CORS_ORIGINS=https://your-admin.vercel.app,http://localhost:8090,http://127.0.0.1:8090,http://localhost:8081,http://127.0.0.1:8081,http://localhost:8082,http://127.0.0.1:8082
 ```
+
+Expo Web submits from the browser origin that serves the dev app. Add the active Expo origin to `CORS_ORIGINS`, then redeploy the API. Expo Go/native builds are not blocked by browser CORS, but they still need the same deployed `EXPO_PUBLIC_API_BASE_URL`.
+
+Admin routes accept either the legacy `X-Admin-Token` header or a signed session from `POST /api/v1/admin/login`. Set a strong `ADMIN_PASSWORD` and a long random `ADMIN_SESSION_SECRET` in production.
 
 ## Backend API
 
@@ -61,10 +68,11 @@ CORS_ORIGINS=https://your-admin.vercel.app
 - `POST /api/v1/assessments`
 - `GET /api/v1/assessments/{id}`
 - `POST /api/v1/chat/messages`
+- `POST /api/v1/admin/login`
 - `GET /api/v1/admin/summary`
 - `GET /api/v1/admin/assessments`
 
-Set `ADMIN_TOKEN` to protect admin routes.
+Set `ADMIN_TOKEN` or `ADMIN_PASSWORD` to protect admin routes.
 
 ## Admin Dashboard
 

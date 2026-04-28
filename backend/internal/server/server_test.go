@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -120,6 +121,76 @@ func TestAdminSummaryRequiresTokenWhenConfigured(t *testing.T) {
 
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d", res.StatusCode)
+	}
+}
+
+func TestAdminLoginReturnsBearerSession(t *testing.T) {
+	app := testApp(t, WithAdminAuth("oracle", "safe-password", "session-secret"))
+
+	loginReq, err := http.NewRequest(
+		http.MethodPost,
+		"/api/v1/admin/login",
+		strings.NewReader(`{"username":"oracle","password":"safe-password"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loginReq.Header.Set("Content-Type", "application/json")
+
+	loginRes, err := app.Test(loginReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer loginRes.Body.Close()
+	if loginRes.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", loginRes.StatusCode)
+	}
+
+	var body struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(loginRes.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Token == "" {
+		t.Fatal("expected login token")
+	}
+
+	summaryReq, err := http.NewRequest(http.MethodGet, "/api/v1/admin/summary", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	summaryReq.Header.Set("Authorization", "Bearer "+body.Token)
+	summaryRes, err := app.Test(summaryReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer summaryRes.Body.Close()
+	if summaryRes.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", summaryRes.StatusCode)
+	}
+}
+
+func TestAdminLoginRejectsInvalidCredentials(t *testing.T) {
+	app := testApp(t, WithAdminAuth("oracle", "safe-password", "session-secret"))
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"/api/v1/admin/login",
+		strings.NewReader(`{"username":"oracle","password":"wrong"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", res.StatusCode)
 	}
 }
 

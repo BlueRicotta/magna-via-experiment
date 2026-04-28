@@ -7,7 +7,31 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="shell">
+    <main id="loginScreen" class="login-screen">
+      <section class="login-panel">
+        <p class="eyebrow">Magna Via</p>
+        <h1>Admin Login</h1>
+        <p>Sign in with the admin credentials configured on the backend.</p>
+        <form id="loginForm" class="login-form">
+          <label>
+            API Base URL
+            <input id="loginApiBaseUrl" name="loginApiBaseUrl" type="url" placeholder="https://magna-via-production.up.railway.app" required />
+          </label>
+          <label>
+            Username
+            <input id="adminUsername" name="adminUsername" type="text" autocomplete="username" placeholder="admin" required />
+          </label>
+          <label>
+            Password
+            <input id="adminPassword" name="adminPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="primary-button" type="submit">Sign In</button>
+        </form>
+        <p id="loginStatus" class="status">Ready.</p>
+      </section>
+    </main>
+
+    <main id="dashboardShell" class="shell" hidden>
       <aside class="sidebar">
         <div>
           <p class="eyebrow">Magna Via</p>
@@ -26,7 +50,10 @@
             <p class="eyebrow">Arcadia Assessment</p>
             <h2>Operational Overview</h2>
           </div>
-          <button id="refreshButton" class="primary-button" type="button">Refresh</button>
+          <div class="topbar-actions">
+            <button id="refreshButton" class="primary-button" type="button">Refresh</button>
+            <button id="logoutButton" class="secondary-button" type="button">Logout</button>
+          </div>
         </header>
 
         <section id="settings" class="panel settings-panel">
@@ -38,10 +65,6 @@
             <label>
               API Base URL
               <input id="apiBaseUrl" name="apiBaseUrl" type="url" placeholder="http://localhost:8080" />
-            </label>
-            <label>
-              Admin Token
-              <input id="adminToken" name="adminToken" type="password" placeholder="Optional for local dev" />
             </label>
             <button class="secondary-button" type="submit">Save Connection</button>
           </form>

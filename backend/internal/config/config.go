@@ -6,21 +6,27 @@ import (
 )
 
 type Config struct {
-	Port           string
-	AdminToken     string
-	DatabaseDriver string
-	DatabaseDSN    string
-	CORSOrigins    string
+	Port               string
+	AdminToken         string
+	AdminUsername      string
+	AdminPassword      string
+	AdminSessionSecret string
+	DatabaseDriver     string
+	DatabaseDSN        string
+	CORSOrigins        string
 }
 
 func Load() Config {
 	driver := getenv("DB_DRIVER", "sqlite")
 	return Config{
-		Port:           getenv("PORT", "8080"),
-		AdminToken:     os.Getenv("ADMIN_TOKEN"),
-		DatabaseDriver: driver,
-		DatabaseDSN:    defaultDSN(driver),
-		CORSOrigins:    getenv("CORS_ORIGINS", "*"),
+		Port:               getenv("PORT", "8080"),
+		AdminToken:         os.Getenv("ADMIN_TOKEN"),
+		AdminUsername:      getenv("ADMIN_USERNAME", "admin"),
+		AdminPassword:      os.Getenv("ADMIN_PASSWORD"),
+		AdminSessionSecret: os.Getenv("ADMIN_SESSION_SECRET"),
+		DatabaseDriver:     driver,
+		DatabaseDSN:        defaultDSN(driver),
+		CORSOrigins:        getenv("CORS_ORIGINS", "*"),
 	}
 }
 

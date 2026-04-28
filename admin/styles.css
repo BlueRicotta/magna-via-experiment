@@ -29,6 +29,32 @@ input {
   font: inherit;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-panel {
+  width: min(100%, 430px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 26px;
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.35);
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
 .shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -109,6 +135,12 @@ p {
   gap: 18px;
 }
 
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .primary-button,
 .secondary-button {
   border: 0;
@@ -146,7 +178,7 @@ p {
 .settings-form {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.8fr) auto;
+  grid-template-columns: minmax(220px, 1fr) auto;
   gap: 12px;
   align-items: end;
 }
@@ -308,6 +340,11 @@ td {
 
   .settings-panel,
   .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topbar-actions {
     align-items: stretch;
     flex-direction: column;
   }

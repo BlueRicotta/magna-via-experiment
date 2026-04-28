@@ -21,6 +21,7 @@ func main() {
 		store.NewGorm(db),
 		cfg.CORSOrigins,
 		server.WithAdminToken(cfg.AdminToken),
+		server.WithAdminAuth(cfg.AdminUsername, cfg.AdminPassword, cfg.AdminSessionSecret),
 	)
 
 	log.Printf("Magna Via API listening on :%s (%s)", cfg.Port, cfg.DatabaseDriver)

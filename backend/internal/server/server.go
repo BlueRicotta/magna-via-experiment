@@ -1,6 +1,11 @@
 package server
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"sort"
 	"strings"
@@ -15,8 +20,12 @@ import (
 )
 
 type Server struct {
-	store      store.AssessmentStore
-	adminToken string
+	store              store.AssessmentStore
+	adminToken         string
+	adminUsername      string
+	adminPassword      string
+	adminSessionSecret string
+	adminSessionTTL    time.Duration
 }
 
 type Option func(*Server)
@@ -27,9 +36,19 @@ func WithAdminToken(token string) Option {
 	}
 }
 
+func WithAdminAuth(username, password, sessionSecret string) Option {
+	return func(s *Server) {
+		s.adminUsername = username
+		s.adminPassword = password
+		s.adminSessionSecret = sessionSecret
+	}
+}
+
 func New(dataStore store.AssessmentStore, corsOrigins string, options ...Option) *fiber.App {
 	s := &Server{
-		store: dataStore,
+		store:           dataStore,
+		adminUsername:   "admin",
+		adminSessionTTL: 12 * time.Hour,
 	}
 	for _, option := range options {
 		option(s)
@@ -42,7 +61,7 @@ func New(dataStore store.AssessmentStore, corsOrigins string, options ...Option)
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: allowOrigin(corsOrigins),
-		AllowHeaders:     "Origin, Content-Type, Accept, X-Admin-Token",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Admin-Token",
 		AllowMethods:     "GET,POST,OPTIONS",
 	}))
 
@@ -53,10 +72,42 @@ func New(dataStore store.AssessmentStore, corsOrigins string, options ...Option)
 	api.Post("/assessments", s.createAssessment)
 	api.Get("/assessments/:id", s.getAssessment)
 	api.Post("/chat/messages", s.chatMessage)
+	api.Post("/admin/login", s.adminLogin)
 	api.Get("/admin/summary", s.adminSummary)
 	api.Get("/admin/assessments", s.adminAssessments)
 
 	return app
+}
+
+type adminLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (s *Server) adminLogin(c *fiber.Ctx) error {
+	var req adminLoginRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid JSON body")
+	}
+
+	password := s.effectiveAdminPassword()
+	if password == "" {
+		return fiber.NewError(fiber.StatusUnauthorized, "admin credentials are not configured")
+	}
+	if strings.TrimSpace(req.Username) != s.effectiveAdminUsername() ||
+		subtle.ConstantTimeCompare([]byte(req.Password), []byte(password)) != 1 {
+		return fiber.NewError(fiber.StatusUnauthorized, "invalid admin credentials")
+	}
+
+	token, expiresAt, err := s.signAdminSession()
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"token":     token,
+		"expiresAt": expiresAt.Format(time.RFC3339),
+	})
 }
 
 func (s *Server) healthz(c *fiber.Ctx) error {
@@ -226,10 +277,97 @@ func (s *Server) adminAssessments(c *fiber.Ctx) error {
 }
 
 func (s *Server) authorizedAdmin(c *fiber.Ctx) bool {
-	if s.adminToken == "" {
+	if s.effectiveAdminPassword() == "" && s.adminToken == "" {
 		return true
 	}
-	return c.Get("X-Admin-Token") == s.adminToken
+	if s.adminToken != "" &&
+		subtle.ConstantTimeCompare([]byte(c.Get("X-Admin-Token")), []byte(s.adminToken)) == 1 {
+		return true
+	}
+
+	auth := strings.TrimSpace(c.Get("Authorization"))
+	if !strings.HasPrefix(strings.ToLower(auth), "bearer ") {
+		return false
+	}
+	return s.verifyAdminSession(strings.TrimSpace(auth[7:]))
+}
+
+type adminSessionClaims struct {
+	Subject string `json:"sub"`
+	Expiry  int64  `json:"exp"`
+}
+
+func (s *Server) effectiveAdminUsername() string {
+	username := strings.TrimSpace(s.adminUsername)
+	if username == "" {
+		return "admin"
+	}
+	return username
+}
+
+func (s *Server) effectiveAdminPassword() string {
+	if s.adminPassword != "" {
+		return s.adminPassword
+	}
+	return s.adminToken
+}
+
+func (s *Server) effectiveSessionSecret() string {
+	if s.adminSessionSecret != "" {
+		return s.adminSessionSecret
+	}
+	if s.adminToken != "" {
+		return s.adminToken
+	}
+	return s.adminPassword
+}
+
+func (s *Server) signAdminSession() (string, time.Time, error) {
+	expiresAt := time.Now().UTC().Add(s.adminSessionTTL)
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+	payload, err := json.Marshal(adminSessionClaims{
+		Subject: "admin",
+		Expiry:  expiresAt.Unix(),
+	})
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	encodedPayload := base64.RawURLEncoding.EncodeToString(payload)
+	unsigned := header + "." + encodedPayload
+	signature := s.adminSignature(unsigned)
+
+	return unsigned + "." + signature, expiresAt, nil
+}
+
+func (s *Server) verifyAdminSession(token string) bool {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 || s.effectiveSessionSecret() == "" {
+		return false
+	}
+
+	unsigned := parts[0] + "." + parts[1]
+	expected := s.adminSignature(unsigned)
+	if subtle.ConstantTimeCompare([]byte(parts[2]), []byte(expected)) != 1 {
+		return false
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return false
+	}
+
+	var claims adminSessionClaims
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return false
+	}
+	return claims.Subject == "admin" && time.Now().UTC().Unix() < claims.Expiry
+}
+
+func (s *Server) adminSignature(unsigned string) string {
+	mac := hmac.New(sha256.New, []byte(s.effectiveSessionSecret()))
+	_, _ = mac.Write([]byte(unsigned))
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func validateAssessmentRequest(req domain.AssessmentRequest) error {

@@ -4,6 +4,13 @@ function cleanBaseUrl() {
   return String(API_BASE_URL || '').replace(/\/+$/, '');
 }
 
+function currentOrigin() {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'native-app';
+}
+
 async function request(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
@@ -27,6 +34,11 @@ async function request(path, options = {}) {
   } catch (error) {
     if (error?.name === 'AbortError') {
       throw new Error('Koneksi ke gerbang Arcadia terlalu lama. Coba lagi sebentar.');
+    }
+    if (error instanceof TypeError && /fetch|network/i.test(error.message || '')) {
+      throw new Error(
+        `Tidak bisa menghubungi backend. API: ${cleanBaseUrl()} | Origin: ${currentOrigin()}`,
+      );
     }
     throw error;
   } finally {

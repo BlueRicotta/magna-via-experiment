@@ -1,12 +1,19 @@
 const defaults = {
   apiBaseUrl: localStorage.getItem('mv_admin_api_base_url') || 'http://localhost:8080',
-  adminToken: localStorage.getItem('mv_admin_token') || '',
+  session: readSession(),
 };
 
 const els = {
+  loginScreen: document.querySelector('#loginScreen'),
+  dashboardShell: document.querySelector('#dashboardShell'),
+  loginForm: document.querySelector('#loginForm'),
+  loginApiBaseUrl: document.querySelector('#loginApiBaseUrl'),
+  adminUsername: document.querySelector('#adminUsername'),
+  adminPassword: document.querySelector('#adminPassword'),
+  loginStatus: document.querySelector('#loginStatus'),
   apiBaseUrl: document.querySelector('#apiBaseUrl'),
-  adminToken: document.querySelector('#adminToken'),
   settingsForm: document.querySelector('#settingsForm'),
+  logoutButton: document.querySelector('#logoutButton'),
   refreshButton: document.querySelector('#refreshButton'),
   status: document.querySelector('#status'),
   totalAssessments: document.querySelector('#totalAssessments'),
@@ -17,8 +24,13 @@ const els = {
   submissionsBody: document.querySelector('#submissionsBody'),
 };
 
+els.loginApiBaseUrl.value = defaults.apiBaseUrl;
 els.apiBaseUrl.value = defaults.apiBaseUrl;
-els.adminToken.value = defaults.adminToken;
+
+els.loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  await login();
+});
 
 els.settingsForm.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -26,15 +38,73 @@ els.settingsForm.addEventListener('submit', (event) => {
   loadDashboard();
 });
 
+els.logoutButton.addEventListener('click', logout);
 els.refreshButton.addEventListener('click', loadDashboard);
+
+if (hasValidSession()) {
+  showDashboard();
+  loadDashboard();
+} else {
+  showLogin();
+}
+
+async function login() {
+  setLoginStatus('Signing in...', '');
+  localStorage.setItem('mv_admin_api_base_url', cleanLoginBaseUrl());
+  els.apiBaseUrl.value = cleanLoginBaseUrl();
+
+  try {
+    const response = await fetch(requestUrl('/api/v1/admin/login', cleanLoginBaseUrl()), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: els.adminUsername.value.trim(),
+        password: els.adminPassword.value,
+      }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || `Login failed: ${response.status}`);
+    }
+
+    defaults.session = {
+      token: payload.token,
+      expiresAt: payload.expiresAt,
+    };
+    localStorage.setItem('mv_admin_session', JSON.stringify(defaults.session));
+    els.adminPassword.value = '';
+    showDashboard();
+    await loadDashboard();
+  } catch (error) {
+    setLoginStatus(formatFetchError(error), 'error');
+  }
+}
+
+function logout() {
+  defaults.session = null;
+  localStorage.removeItem('mv_admin_session');
+  clearDashboard();
+  showLogin();
+  setLoginStatus('Signed out.', 'ok');
+}
 
 function saveSettings() {
   localStorage.setItem('mv_admin_api_base_url', cleanBaseUrl());
-  localStorage.setItem('mv_admin_token', els.adminToken.value.trim());
+  els.loginApiBaseUrl.value = cleanBaseUrl();
   setStatus('Connection saved.', 'ok');
 }
 
 async function loadDashboard() {
+  if (!hasValidSession()) {
+    logout();
+    setLoginStatus('Session expired. Please sign in again.', 'error');
+    return;
+  }
+
   saveSettings();
   setStatus('Loading dashboard...', '');
 
@@ -49,10 +119,12 @@ async function loadDashboard() {
     renderRows(rows.assessments || []);
     setStatus(`Connected to ${health.service || 'API'}.`, 'ok');
   } catch (error) {
-    const message = error instanceof TypeError && error.message === 'Failed to fetch'
-      ? 'Failed to fetch. Check the API URL and backend CORS_ORIGINS setting.'
-      : error.message;
-    setStatus(message, 'error');
+    if (/unauthorized|401/i.test(error.message)) {
+      logout();
+      setLoginStatus('Session rejected by backend. Please sign in again.', 'error');
+      return;
+    }
+    setStatus(formatFetchError(error), 'error');
   }
 }
 
@@ -60,7 +132,7 @@ async function apiFetch(path) {
   const response = await fetch(requestUrl(path), {
     headers: {
       Accept: 'application/json',
-      ...(els.adminToken.value.trim() ? { 'X-Admin-Token': els.adminToken.value.trim() } : {}),
+      Authorization: `Bearer ${defaults.session?.token || ''}`,
     },
   });
 
@@ -71,15 +143,15 @@ async function apiFetch(path) {
   return payload;
 }
 
-function requestUrl(path) {
+function requestUrl(path, baseUrl = cleanBaseUrl()) {
   if (shouldUseProxy()) {
     const params = new URLSearchParams({
-      baseUrl: cleanBaseUrl(),
+      baseUrl,
       path,
     });
     return `/api/proxy?${params.toString()}`;
   }
-  return `${cleanBaseUrl()}${path}`;
+  return `${baseUrl}${path}`;
 }
 
 function shouldUseProxy() {
@@ -88,12 +160,64 @@ function shouldUseProxy() {
 }
 
 function cleanBaseUrl() {
-  return (els.apiBaseUrl.value || 'http://localhost:8080').trim().replace(/\/+$/, '');
+  return cleanUrl(els.apiBaseUrl.value || 'http://localhost:8080');
+}
+
+function cleanLoginBaseUrl() {
+  return cleanUrl(els.loginApiBaseUrl.value || 'http://localhost:8080');
+}
+
+function cleanUrl(value) {
+  return String(value).trim().replace(/\/+$/, '');
+}
+
+function showLogin() {
+  els.loginScreen.hidden = false;
+  els.dashboardShell.hidden = true;
+}
+
+function showDashboard() {
+  els.loginScreen.hidden = true;
+  els.dashboardShell.hidden = false;
+}
+
+function readSession() {
+  try {
+    return JSON.parse(localStorage.getItem('mv_admin_session') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function hasValidSession() {
+  if (!defaults.session?.token || !defaults.session?.expiresAt) return false;
+  return new Date(defaults.session.expiresAt).getTime() > Date.now();
+}
+
+function clearDashboard() {
+  els.totalAssessments.textContent = '0';
+  els.topClass.textContent = '-';
+  els.topDimension.textContent = '-';
+  els.classDistribution.innerHTML = '<p class="muted">No data loaded.</p>';
+  els.dimensionTotals.innerHTML = '<p class="muted">No data loaded.</p>';
+  els.submissionsBody.innerHTML = '<tr><td colspan="6" class="empty">No data loaded yet.</td></tr>';
+  setStatus('Signed out.', '');
 }
 
 function setStatus(message, type) {
   els.status.textContent = message;
   els.status.className = `status ${type ? `is-${type}` : ''}`.trim();
+}
+
+function setLoginStatus(message, type) {
+  els.loginStatus.textContent = message;
+  els.loginStatus.className = `status ${type ? `is-${type}` : ''}`.trim();
+}
+
+function formatFetchError(error) {
+  return error instanceof TypeError && error.message === 'Failed to fetch'
+    ? 'Failed to fetch. Check the API URL and backend CORS_ORIGINS setting.'
+    : error.message;
 }
 
 function renderSummary(summary) {
@@ -189,5 +313,3 @@ function escapeHTML(value) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 }
-
-loadDashboard();
