@@ -383,9 +383,8 @@ const styles = StyleSheet.create({
   },
   step: {
     color: colors.textMuted,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 2.4,
     textAlign: 'center',
   },
@@ -446,9 +445,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 31,
-    fontWeight: '700',
     letterSpacing: 1.8,
     lineHeight: 37,
     textAlign: 'center',

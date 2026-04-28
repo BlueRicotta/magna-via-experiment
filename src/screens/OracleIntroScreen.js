@@ -479,9 +479,8 @@ const styles = StyleSheet.create({
   },
   speakerName: {
     color: colors.gold,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 14,
-    fontWeight: '700',
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
@@ -500,9 +499,8 @@ const styles = StyleSheet.create({
   },
   sceneTitle: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemiBold,
     fontSize: 25,
-    fontWeight: '600',
     letterSpacing: 1,
     lineHeight: 31,
   },

@@ -459,9 +459,8 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     color: colors.gold,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 56,
-    fontWeight: '700',
     letterSpacing: 10,
     lineHeight: 62,
     textShadowColor: 'rgba(200,160,48,0.35)',

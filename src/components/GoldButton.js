@@ -53,9 +53,8 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.textOnInvert,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 15,
-    fontWeight: '700',
     letterSpacing: 3,
   },
   arrow: {

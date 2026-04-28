@@ -2,12 +2,6 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import {
-  Nunito_400Regular,
-  Nunito_500Medium,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-} from '@expo-google-fonts/nunito';
 
 import { SplashScreen } from './screens/SplashScreen';
 import { OracleIntroScreen } from './screens/OracleIntroScreen';
@@ -38,15 +32,17 @@ export default function App() {
     error: '',
   });
   const [fontsLoaded] = useFonts({
-    Cinzel: require('../assets/fonts/Cinzel-VariableFont_wght.ttf'),
+    Cinzel: require('@expo-google-fonts/cinzel/400Regular/Cinzel_400Regular.ttf'),
+    CinzelSemiBold: require('@expo-google-fonts/cinzel/600SemiBold/Cinzel_600SemiBold.ttf'),
+    CinzelBold: require('@expo-google-fonts/cinzel/700Bold/Cinzel_700Bold.ttf'),
     CrimsonText: require('../assets/fonts/CrimsonText-Regular.ttf'),
     CrimsonTextItalic: require('../assets/fonts/CrimsonText-Italic.ttf'),
     CrimsonTextSemiBold: require('../assets/fonts/CrimsonText-SemiBold.ttf'),
     CrimsonTextBold: require('../assets/fonts/CrimsonText-Bold.ttf'),
-    Nunito_400Regular,
-    Nunito_500Medium,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
+    Nunito_400Regular: require('@expo-google-fonts/nunito/400Regular/Nunito_400Regular.ttf'),
+    Nunito_500Medium: require('@expo-google-fonts/nunito/500Medium/Nunito_500Medium.ttf'),
+    Nunito_600SemiBold: require('@expo-google-fonts/nunito/600SemiBold/Nunito_600SemiBold.ttf'),
+    Nunito_700Bold: require('@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf'),
   });
 
   const handleLaunch = useCallback(() => {

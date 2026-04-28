@@ -319,9 +319,8 @@ const styles = StyleSheet.create({
   },
   name: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 16,
-    fontWeight: '700',
     letterSpacing: 0.8,
   },
   presence: {
@@ -552,9 +551,8 @@ const styles = StyleSheet.create({
   },
   railTitle: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 24,
-    fontWeight: '700',
     lineHeight: 30,
   },
   railDominant: {

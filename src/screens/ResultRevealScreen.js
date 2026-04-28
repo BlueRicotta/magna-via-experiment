@@ -302,9 +302,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 31,
-    fontWeight: '700',
     letterSpacing: 1.5,
     lineHeight: 38,
     textAlign: 'center',

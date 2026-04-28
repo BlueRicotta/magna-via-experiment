@@ -23,6 +23,11 @@ export const colors = {
 
 export const fonts = {
   display: 'Cinzel',
+  displaySemiBold: 'CinzelSemiBold',
+  displayBold: 'CinzelBold',
+  primary: 'Cinzel',
+  primarySemiBold: 'CinzelSemiBold',
+  primaryBold: 'CinzelBold',
   oracle: 'CrimsonText',
   oracleItalic: 'CrimsonTextItalic',
   oracleSemiBold: 'CrimsonTextSemiBold',

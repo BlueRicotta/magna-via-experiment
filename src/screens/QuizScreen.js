@@ -443,9 +443,8 @@ const styles = StyleSheet.create({
   step: {
     flex: 1,
     color: colors.textMuted,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 2.3,
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -460,9 +459,8 @@ const styles = StyleSheet.create({
     borderColor: colors.gold,
     backgroundColor: 'rgba(200,160,48,0.12)',
     color: colors.goldHi,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 12,
-    fontWeight: '700',
     letterSpacing: 1.5,
     lineHeight: 33,
     textAlign: 'center',
@@ -511,9 +509,8 @@ const styles = StyleSheet.create({
   },
   narrative: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemiBold,
     fontSize: 20,
-    fontWeight: '600',
     letterSpacing: 0.8,
     lineHeight: 27,
   },
@@ -555,9 +552,8 @@ const styles = StyleSheet.create({
   },
   choiceLetterText: {
     color: colors.textSecondary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 13,
-    fontWeight: '700',
   },
   choiceLetterTextSelected: {
     color: colors.textOnInvert,

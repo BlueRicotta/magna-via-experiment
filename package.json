@@ -20,6 +20,7 @@
     "api:test": "cd backend && GOCACHE=/tmp/magna-via-go-cache go test ./..."
   },
   "dependencies": {
+    "@expo-google-fonts/cinzel": "^0.4.2",
     "@expo-google-fonts/nunito": "^0.4.2",
     "expo": "^55.0.17",
     "expo-font": "^55.0.6",

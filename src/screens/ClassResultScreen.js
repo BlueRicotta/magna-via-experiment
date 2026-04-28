@@ -99,8 +99,7 @@ function HexRadar({ scores, color, size }) {
             textAnchor="middle"
             fill={dimensionMeta[dim].color}
             fontSize="12"
-            fontWeight="700"
-            fontFamily="Cinzel"
+            fontFamily="CinzelBold"
           >
             {dim}
           </SvgText>
@@ -316,9 +315,8 @@ const styles = StyleSheet.create({
   step: {
     flex: 1,
     color: colors.textMuted,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 2.3,
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -399,9 +397,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 30,
-    fontWeight: '700',
     letterSpacing: 1.1,
     lineHeight: 36,
     textAlign: 'center',
@@ -473,9 +470,8 @@ const styles = StyleSheet.create({
   },
   dimensionKey: {
     width: 22,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 15,
-    fontWeight: '700',
     textAlign: 'center',
   },
   dimensionTextWrap: {
@@ -498,9 +494,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   dominant: {
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 22,
-    fontWeight: '700',
     letterSpacing: 0.8,
     lineHeight: 28,
   },

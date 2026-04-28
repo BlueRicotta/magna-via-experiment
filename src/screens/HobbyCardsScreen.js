@@ -329,9 +329,8 @@ const styles = StyleSheet.create({
   step: {
     flex: 1,
     color: colors.textMuted,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 2.3,
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -359,18 +358,16 @@ const styles = StyleSheet.create({
   },
   counterNum: {
     color: colors.textMuted,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 14,
-    fontWeight: '700',
   },
   counterNumActive: {
     color: colors.goldHi,
   },
   counterText: {
     color: colors.textMuted,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 10,
-    fontWeight: '700',
   },
   counterLabel: {
     color: colors.textMuted,
@@ -398,9 +395,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 31,
-    fontWeight: '700',
     letterSpacing: 1.8,
     lineHeight: 37,
     textAlign: 'center',
@@ -528,9 +524,8 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: colors.textPrimary,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displayBold,
     fontSize: 14,
-    fontWeight: '700',
     letterSpacing: 0.7,
     lineHeight: 18,
     textAlign: 'center',
