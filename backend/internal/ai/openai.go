@@ -55,14 +55,36 @@ func (c *OpenAIClient) GenerateChatReply(ctx context.Context, assessment domain.
 		MaxOutputTokens: 1000,
 		Reasoning:       &openAIReasoning{Effort: "medium"},
 	}
-	payload, err := json.Marshal(body)
+
+	response, err := c.createResponse(ctx, baseURL, body)
 	if err != nil {
 		return "", err
+	}
+	if text := response.replyText(); text != "" {
+		return text, nil
+	}
+
+	retryBody := body
+	retryBody.Reasoning = &openAIReasoning{Effort: "minimal"}
+	retryResponse, retryErr := c.createResponse(ctx, baseURL, retryBody)
+	if retryErr != nil {
+		return "", fmt.Errorf("openai returned an empty reply (%s); retry failed: %w", response.debugSummary(), retryErr)
+	}
+	if text := retryResponse.replyText(); text != "" {
+		return text, nil
+	}
+	return "", fmt.Errorf("openai returned an empty reply (%s; retry: %s)", response.debugSummary(), retryResponse.debugSummary())
+}
+
+func (c *OpenAIClient) createResponse(ctx context.Context, baseURL string, body openAIResponseRequest) (openAIResponse, error) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return openAIResponse{}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/responses", bytes.NewReader(payload))
 	if err != nil {
-		return "", err
+		return openAIResponse{}, err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -70,29 +92,21 @@ func (c *OpenAIClient) GenerateChatReply(ctx context.Context, assessment domain.
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return openAIResponse{}, err
 	}
 	defer res.Body.Close()
 
 	var response openAIResponse
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return "", err
+		return openAIResponse{}, err
 	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		if response.Error.Message != "" {
-			return "", errors.New(response.Error.Message)
+			return openAIResponse{}, errors.New(response.Error.Message)
 		}
-		return "", fmt.Errorf("openai request failed with status %d", res.StatusCode)
+		return openAIResponse{}, fmt.Errorf("openai request failed with status %d", res.StatusCode)
 	}
-
-	text := strings.TrimSpace(response.OutputText)
-	if text == "" {
-		text = strings.TrimSpace(response.firstText())
-	}
-	if text == "" {
-		return "", errors.New("openai returned an empty reply")
-	}
-	return text, nil
+	return response, nil
 }
 
 type openAIResponseRequest struct {
@@ -108,8 +122,11 @@ type openAIReasoning struct {
 }
 
 type openAIResponse struct {
+	ID         string `json:"id"`
+	Status     string `json:"status"`
 	OutputText string `json:"output_text"`
 	Output     []struct {
+		ID      string `json:"id"`
 		Type    string `json:"type"`
 		Text    string `json:"text"`
 		Content []struct {
@@ -122,6 +139,13 @@ type openAIResponse struct {
 	Error struct {
 		Message string `json:"message"`
 	} `json:"error"`
+	IncompleteDetails struct {
+		Reason string `json:"reason"`
+	} `json:"incomplete_details"`
+	Usage struct {
+		InputTokens  int `json:"input_tokens"`
+		OutputTokens int `json:"output_tokens"`
+	} `json:"usage"`
 }
 
 func (r openAIResponse) firstText() string {
@@ -139,6 +163,36 @@ func (r openAIResponse) firstText() string {
 		}
 	}
 	return ""
+}
+
+func (r openAIResponse) replyText() string {
+	text := strings.TrimSpace(r.OutputText)
+	if text == "" {
+		text = strings.TrimSpace(r.firstText())
+	}
+	return text
+}
+
+func (r openAIResponse) debugSummary() string {
+	types := make([]string, 0, len(r.Output))
+	for _, output := range r.Output {
+		types = append(types, output.Type)
+	}
+	status := r.Status
+	if status == "" {
+		status = "unknown"
+	}
+	reason := r.IncompleteDetails.Reason
+	if reason == "" {
+		reason = "none"
+	}
+	return fmt.Sprintf(
+		"status=%s incomplete_reason=%s output_types=%s output_tokens=%d",
+		status,
+		reason,
+		strings.Join(types, ","),
+		r.Usage.OutputTokens,
+	)
 }
 
 func cenayangInstructions() string {
