@@ -56,7 +56,7 @@ type AssessmentModel struct {
 	ResultStrengths          StringSlice `gorm:"type:longtext"`
 	ResultMajors             StringSlice `gorm:"type:longtext"`
 
-	ChatReplies int
+	ChatReplies int `gorm:"not null;default:0"`
 }
 
 type ChatMessage struct {
@@ -84,7 +84,12 @@ func NewGorm(db *gorm.DB) *GormStore {
 }
 
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(&AssessmentModel{}, &ChatMessageModel{})
+	if err := db.AutoMigrate(&AssessmentModel{}, &ChatMessageModel{}); err != nil {
+		return err
+	}
+	return db.Model(&AssessmentModel{}).
+		Where("chat_replies IS NULL").
+		Update("chat_replies", 0).Error
 }
 
 func (s *GormStore) SaveAssessment(ctx context.Context, assessment domain.Assessment) (domain.Assessment, error) {
@@ -141,7 +146,7 @@ func (s *GormStore) IncrementChatReplyCount(ctx context.Context, assessmentID st
 	result := s.db.WithContext(ctx).
 		Model(&AssessmentModel{}).
 		Where("id = ?", assessmentID).
-		UpdateColumn("chat_replies", gorm.Expr("chat_replies + ?", 1))
+		UpdateColumn("chat_replies", gorm.Expr("COALESCE(chat_replies, 0) + ?", 1))
 	if result.Error != nil {
 		return result.Error
 	}
