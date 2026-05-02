@@ -20,7 +20,6 @@ type AssessmentStore interface {
 	ListAssessments(ctx context.Context) ([]domain.Assessment, error)
 	ChatReplyCount(ctx context.Context, assessmentID string) (int, error)
 	IncrementChatReplyCount(ctx context.Context, assessmentID string) error
-	SaveChatMessage(ctx context.Context, message ChatMessage) error
 }
 
 type GormStore struct {
@@ -59,22 +58,6 @@ type AssessmentModel struct {
 	ChatReplies int `gorm:"not null;default:0"`
 }
 
-type ChatMessage struct {
-	ID           string    `json:"id"`
-	AssessmentID string    `json:"assessmentId"`
-	Sender       string    `json:"sender"`
-	Message      string    `json:"message"`
-	CreatedAt    time.Time `json:"createdAt"`
-}
-
-type ChatMessageModel struct {
-	ID           string    `gorm:"primaryKey;size:36"`
-	AssessmentID string    `gorm:"size:36;index"`
-	Sender       string    `gorm:"size:32;index"`
-	Message      string    `gorm:"type:text"`
-	CreatedAt    time.Time `gorm:"index"`
-}
-
 type StringSlice []string
 type QuizAnswerMap map[string]domain.QuizAnswer
 type ScoresMap map[string]int
@@ -84,7 +67,7 @@ func NewGorm(db *gorm.DB) *GormStore {
 }
 
 func AutoMigrate(db *gorm.DB) error {
-	if err := db.AutoMigrate(&AssessmentModel{}, &ChatMessageModel{}); err != nil {
+	if err := db.AutoMigrate(&AssessmentModel{}); err != nil {
 		return err
 	}
 	return db.Model(&AssessmentModel{}).
@@ -154,22 +137,6 @@ func (s *GormStore) IncrementChatReplyCount(ctx context.Context, assessmentID st
 		return ErrNotFound
 	}
 	return nil
-}
-
-func (s *GormStore) SaveChatMessage(ctx context.Context, message ChatMessage) error {
-	if message.ID == "" {
-		message.ID = uuid.NewString()
-	}
-	if message.CreatedAt.IsZero() {
-		message.CreatedAt = time.Now().UTC()
-	}
-	return s.db.WithContext(ctx).Create(&ChatMessageModel{
-		ID:           message.ID,
-		AssessmentID: message.AssessmentID,
-		Sender:       message.Sender,
-		Message:      message.Message,
-		CreatedAt:    message.CreatedAt,
-	}).Error
 }
 
 func assessmentToModel(assessment domain.Assessment) AssessmentModel {
