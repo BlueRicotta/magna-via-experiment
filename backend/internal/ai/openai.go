@@ -104,9 +104,13 @@ type openAIResponseRequest struct {
 type openAIResponse struct {
 	OutputText string `json:"output_text"`
 	Output     []struct {
+		Type    string `json:"type"`
+		Text    string `json:"text"`
 		Content []struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
+			Type        string `json:"type"`
+			Text        string `json:"text"`
+			Value       string `json:"value"`
+			Annotations []any  `json:"annotations"`
 		} `json:"content"`
 	} `json:"output"`
 	Error struct {
@@ -116,9 +120,15 @@ type openAIResponse struct {
 
 func (r openAIResponse) firstText() string {
 	for _, output := range r.Output {
+		if output.Text != "" {
+			return output.Text
+		}
 		for _, content := range output.Content {
 			if content.Text != "" {
 				return content.Text
+			}
+			if content.Value != "" {
+				return content.Value
 			}
 		}
 	}
