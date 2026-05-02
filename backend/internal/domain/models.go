@@ -47,6 +47,7 @@ type Assessment struct {
 	Scores        Scores                `json:"scores"`
 	TopDimensions []string              `json:"topDimensions"`
 	Result        ClassResult           `json:"result"`
+	ChatReplies   int                   `json:"chatReplies"`
 }
 
 type ChatRequest struct {
@@ -55,5 +56,6 @@ type ChatRequest struct {
 }
 
 type ChatResponse struct {
-	Reply string `json:"reply"`
+	Reply       string `json:"reply"`
+	RepliesLeft int    `json:"repliesLeft"`
 }

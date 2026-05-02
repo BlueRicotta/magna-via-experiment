@@ -202,6 +202,7 @@ export default function App() {
         />
       ) : route === 'chat' ? (
         <CenayangChatScreen
+          assessmentId={appState.assessmentId}
           scores={appState.quizScores}
           classId={appState.classId}
           onBack={handleChatBack}

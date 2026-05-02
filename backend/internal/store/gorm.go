@@ -18,6 +18,8 @@ type AssessmentStore interface {
 	SaveAssessment(ctx context.Context, assessment domain.Assessment) (domain.Assessment, error)
 	GetAssessment(ctx context.Context, id string) (domain.Assessment, error)
 	ListAssessments(ctx context.Context) ([]domain.Assessment, error)
+	ChatReplyCount(ctx context.Context, assessmentID string) (int, error)
+	IncrementChatReplyCount(ctx context.Context, assessmentID string) error
 	SaveChatMessage(ctx context.Context, message ChatMessage) error
 }
 
@@ -53,6 +55,8 @@ type AssessmentModel struct {
 	ResultSummary            string      `gorm:"type:text"`
 	ResultStrengths          StringSlice `gorm:"type:longtext"`
 	ResultMajors             StringSlice `gorm:"type:longtext"`
+
+	ChatReplies int
 }
 
 type ChatMessage struct {
@@ -122,6 +126,31 @@ func (s *GormStore) ListAssessments(ctx context.Context) ([]domain.Assessment, e
 	return assessments, nil
 }
 
+func (s *GormStore) ChatReplyCount(ctx context.Context, assessmentID string) (int, error) {
+	var model AssessmentModel
+	if err := s.db.WithContext(ctx).Select("chat_replies").First(&model, "id = ?", assessmentID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, ErrNotFound
+		}
+		return 0, err
+	}
+	return model.ChatReplies, nil
+}
+
+func (s *GormStore) IncrementChatReplyCount(ctx context.Context, assessmentID string) error {
+	result := s.db.WithContext(ctx).
+		Model(&AssessmentModel{}).
+		Where("id = ?", assessmentID).
+		UpdateColumn("chat_replies", gorm.Expr("chat_replies + ?", 1))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (s *GormStore) SaveChatMessage(ctx context.Context, message ChatMessage) error {
 	if message.ID == "" {
 		message.ID = uuid.NewString()
@@ -166,6 +195,7 @@ func assessmentToModel(assessment domain.Assessment) AssessmentModel {
 		ResultSummary:            assessment.Result.Summary,
 		ResultStrengths:          StringSlice(assessment.Result.Strengths),
 		ResultMajors:             StringSlice(assessment.Result.Majors),
+		ChatReplies:              assessment.ChatReplies,
 	}
 }
 
@@ -186,6 +216,7 @@ func modelToAssessment(model AssessmentModel) domain.Assessment {
 		QuizAnswers:   map[string]domain.QuizAnswer(model.QuizAnswers),
 		Scores:        domain.Scores(model.Scores),
 		TopDimensions: []string(model.TopDimensions),
+		ChatReplies:   model.ChatReplies,
 		Result: domain.ClassResult{
 			ID:                 model.ResultID,
 			Name:               model.ResultName,

@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
+	"magnavia/backend/internal/ai"
 	"magnavia/backend/internal/domain"
 	"magnavia/backend/internal/store"
 )
@@ -26,6 +27,9 @@ type Server struct {
 	adminPassword      string
 	adminSessionSecret string
 	adminSessionTTL    time.Duration
+	chatEnabled        bool
+	chatReplyLimit     int
+	chatGenerator      ai.ChatGenerator
 }
 
 type Option func(*Server)
@@ -44,11 +48,28 @@ func WithAdminAuth(username, password, sessionSecret string) Option {
 	}
 }
 
+func WithChatSettings(enabled bool, replyLimit int) Option {
+	return func(s *Server) {
+		s.chatEnabled = enabled
+		if replyLimit > 0 {
+			s.chatReplyLimit = replyLimit
+		}
+	}
+}
+
+func WithChatGenerator(generator ai.ChatGenerator) Option {
+	return func(s *Server) {
+		s.chatGenerator = generator
+	}
+}
+
 func New(dataStore store.AssessmentStore, corsOrigins string, options ...Option) *fiber.App {
 	s := &Server{
 		store:           dataStore,
 		adminUsername:   "admin",
 		adminSessionTTL: 12 * time.Hour,
+		chatEnabled:     true,
+		chatReplyLimit:  5,
 	}
 	for _, option := range options {
 		option(s)
@@ -167,6 +188,13 @@ func (s *Server) getAssessment(c *fiber.Ctx) error {
 }
 
 func (s *Server) chatMessage(c *fiber.Ctx) error {
+	if !s.chatEnabled {
+		return fiber.NewError(fiber.StatusForbidden, "chat is currently disabled")
+	}
+	if s.chatGenerator == nil {
+		return fiber.NewError(fiber.StatusServiceUnavailable, "chat is not configured")
+	}
+
 	var req domain.ChatRequest
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid JSON body")
@@ -174,32 +202,38 @@ func (s *Server) chatMessage(c *fiber.Ctx) error {
 	if strings.TrimSpace(req.Message) == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "message is required")
 	}
-
-	result := domain.ClassCatalog()[0]
-	if req.AssessmentID != "" {
-		assessment, err := s.store.GetAssessment(c.Context(), req.AssessmentID)
-		if errors.Is(err, store.ErrNotFound) {
-			return fiber.NewError(fiber.StatusNotFound, "assessment not found")
-		}
-		if err != nil {
-			return err
-		}
-		result = assessment.Result
+	if strings.TrimSpace(req.AssessmentID) == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "assessmentId is required")
 	}
 
-	_ = s.store.SaveChatMessage(c.Context(), store.ChatMessage{
-		AssessmentID: req.AssessmentID,
-		Sender:       "user",
-		Message:      req.Message,
-	})
-	reply := "Cenayang melihat resonansi " + result.Name + ". Untuk saat ini ini masih jawaban dummy, tapi konteks hasilmu sudah dikirim ke backend."
-	_ = s.store.SaveChatMessage(c.Context(), store.ChatMessage{
-		AssessmentID: req.AssessmentID,
-		Sender:       "oracle",
-		Message:      reply,
-	})
+	assessment, err := s.store.GetAssessment(c.Context(), req.AssessmentID)
+	if errors.Is(err, store.ErrNotFound) {
+		return fiber.NewError(fiber.StatusNotFound, "assessment not found")
+	}
+	if err != nil {
+		return err
+	}
 
-	return c.JSON(domain.ChatResponse{Reply: reply})
+	count, err := s.store.ChatReplyCount(c.Context(), req.AssessmentID)
+	if err != nil {
+		return err
+	}
+	if count >= s.chatReplyLimit {
+		return fiber.NewError(fiber.StatusTooManyRequests, "chat reply limit reached")
+	}
+
+	reply, err := s.chatGenerator.GenerateChatReply(c.Context(), assessment, req.Message)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadGateway, "failed to generate chat reply")
+	}
+	if err := s.store.IncrementChatReplyCount(c.Context(), req.AssessmentID); err != nil {
+		return err
+	}
+
+	return c.JSON(domain.ChatResponse{
+		Reply:       reply,
+		RepliesLeft: max(0, s.chatReplyLimit-count-1),
+	})
 }
 
 func (s *Server) adminSummary(c *fiber.Ctx) error {

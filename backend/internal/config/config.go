@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +15,11 @@ type Config struct {
 	DatabaseDriver     string
 	DatabaseDSN        string
 	CORSOrigins        string
+	OpenAIAPIKey       string
+	OpenAIModel        string
+	OpenAIBaseURL      string
+	ChatEnabled        bool
+	ChatReplyLimit     int
 }
 
 func Load() Config {
@@ -27,6 +33,11 @@ func Load() Config {
 		DatabaseDriver:     driver,
 		DatabaseDSN:        defaultDSN(driver),
 		CORSOrigins:        getenv("CORS_ORIGINS", "*"),
+		OpenAIAPIKey:       os.Getenv("OPENAI_API_KEY"),
+		OpenAIModel:        getenv("OPENAI_MODEL", "gpt-5-nano"),
+		OpenAIBaseURL:      getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+		ChatEnabled:        getenvBool("CHAT_ENABLED", true),
+		ChatReplyLimit:     getenvInt("CHAT_REPLY_LIMIT", 5),
 	}
 }
 
@@ -36,6 +47,26 @@ func getenv(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func getenvBool(key string, fallback bool) bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+	if value == "" {
+		return fallback
+	}
+	return value == "1" || value == "true" || value == "yes" || value == "on"
+}
+
+func getenvInt(key string, fallback int) int {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
 }
 
 func defaultDSN(driver string) string {

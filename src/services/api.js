@@ -72,3 +72,13 @@ export function submitAssessment({ user, hobbyCards, birthStar, quizAnswers }) {
     }),
   });
 }
+
+export function sendChatMessage({ assessmentId, message }) {
+  return request('/api/v1/chat/messages', {
+    method: 'POST',
+    body: JSON.stringify({
+      assessmentId,
+      message,
+    }),
+  });
+}

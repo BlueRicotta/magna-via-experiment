@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"magnavia/backend/internal/domain"
 	"magnavia/backend/internal/store"
 )
 
@@ -194,6 +196,96 @@ func TestAdminLoginRejectsInvalidCredentials(t *testing.T) {
 	}
 }
 
+func TestChatMessageUsesGeneratorAndReplyLimit(t *testing.T) {
+	app := testApp(t, WithChatSettings(true, 2), WithChatGenerator(fakeChatGenerator{}))
+	createReq, err := http.NewRequest(http.MethodPost, "/api/v1/assessments", bytes.NewReader(validAssessmentBody()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	createReq.Header.Set("Content-Type", "application/json")
+	createRes, err := app.Test(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer createRes.Body.Close()
+
+	var created struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(createRes.Body).Decode(&created); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, wantLeft := range []int{1, 0} {
+		req, err := http.NewRequest(
+			http.MethodPost,
+			"/api/v1/chat/messages",
+			strings.NewReader(`{"assessmentId":"`+created.ID+`","message":"apa pekerjaan yang cocok?"}`),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		res, err := app.Test(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusOK {
+			t.Fatalf("request %d expected 200, got %d", i+1, res.StatusCode)
+		}
+		var body domain.ChatResponse
+		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		if body.Reply == "" {
+			t.Fatal("expected generated reply")
+		}
+		if body.RepliesLeft != wantLeft {
+			t.Fatalf("expected repliesLeft %d, got %d", wantLeft, body.RepliesLeft)
+		}
+	}
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"/api/v1/chat/messages",
+		strings.NewReader(`{"assessmentId":"`+created.ID+`","message":"satu lagi?"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusTooManyRequests {
+		t.Fatalf("expected 429 after limit, got %d", res.StatusCode)
+	}
+}
+
+func TestChatMessageCanBeDisabled(t *testing.T) {
+	app := testApp(t, WithChatSettings(false, 5), WithChatGenerator(fakeChatGenerator{}))
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"/api/v1/chat/messages",
+		strings.NewReader(`{"assessmentId":"abc","message":"halo"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected 403 when chat disabled, got %d", res.StatusCode)
+	}
+}
+
 func TestAdminAssessmentsReturnsSubmittedRows(t *testing.T) {
 	app := testApp(t)
 	createReq, err := http.NewRequest(http.MethodPost, "/api/v1/assessments", bytes.NewReader(validAssessmentBody()))
@@ -241,6 +333,12 @@ func TestAdminAssessmentsReturnsSubmittedRows(t *testing.T) {
 	if body.Assessments[0].FullName != "Arcadia Tester" {
 		t.Fatalf("unexpected full name %q", body.Assessments[0].FullName)
 	}
+}
+
+type fakeChatGenerator struct{}
+
+func (fakeChatGenerator) GenerateChatReply(_ context.Context, assessment domain.Assessment, message string) (string, error) {
+	return "Cenayang melihat jalur " + assessment.Result.Name + " untuk pertanyaan: " + message, nil
 }
 
 func TestAllowOriginHandlesCommaSeparatedValuesAndTrailingSlash(t *testing.T) {

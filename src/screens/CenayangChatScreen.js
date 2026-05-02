@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -15,6 +15,7 @@ import {
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { classCatalog, resultFromScores } from '../data/results';
+import { sendChatMessage } from '../services/api';
 import { colors, fonts, radii } from '../theme/tokens';
 
 const cenayangAvatar = require('../../assets/images/characters/cenayang-avatar.webp');
@@ -37,18 +38,6 @@ function seedMessages(klass) {
       from: 'oracle',
       text: `Selamat atas perjalananmu, ${klass.title}. Aku melihat resonansi ${klass.name} bersinar di gulunganmu.`,
       time: '10:24',
-    },
-    {
-      id: 'm2',
-      from: 'user',
-      text: 'Jurusan apa yang paling cocok untukku?',
-      time: '10:25',
-    },
-    {
-      id: 'm3',
-      from: 'oracle',
-      text: `Untukmu, jalur seperti ${klass.majors.slice(0, 3).join(', ')} terasa paling selaras. Bukan sebagai batasan, melainkan pintu pertama yang layak kamu buka.`,
-      time: '10:25',
     },
   ];
 }
@@ -123,47 +112,60 @@ function ClassRail({ klass }) {
           </View>
         ))}
       </View>
-      <Text style={styles.railTip}>Cenayang memakai hasilmu sebagai konteks dummy untuk simulasi chat ini.</Text>
+      <Text style={styles.railTip}>Cenayang memakai hasil dan pilihanmu sebagai konteks konsultasi singkat.</Text>
     </View>
   );
 }
 
-export function CenayangChatScreen({ scores = {}, classId, onBack }) {
+export function CenayangChatScreen({ assessmentId, scores = {}, classId, onBack }) {
   const { width } = useWindowDimensions();
   const breakpoint = getBreakpoint(width);
   const desktop = breakpoint === 'desktop';
   const klass = classCatalog[classId] || resultFromScores(scores).klass;
   const [messages, setMessages] = useState(() => seedMessages(klass));
   const [draft, setDraft] = useState('');
-  const [sessionsLeft, setSessionsLeft] = useState(4);
+  const [sessionsLeft, setSessionsLeft] = useState(5);
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
   const exhausted = sessionsLeft === 0;
   const showWarning = sessionsLeft <= 2;
 
-  const replies = useMemo(
-    () => [
-      `Kekuatan ${klass.name} bukan ramalan yang mengikat. Ia lebih seperti kompas: gunakan untuk memilih arah, lalu uji lewat pengalaman nyata.`,
-      `Aku melihat pola ${klass.dominant.join(' dan ')} dalam jawabanmu. Carilah kegiatan yang memberi ruang untuk dua energi itu sekaligus.`,
-      `Pertanyaan yang baik. Untuk minggu ini, coba satu langkah kecil: cari jurusan, lihat mata kuliahnya, lalu catat mana yang membuatmu penasaran.`,
-    ],
-    [klass]
-  );
-
-  const send = () => {
+  const send = async () => {
     const text = draft.trim();
-    if (!text || exhausted) return;
+    if (!text || exhausted || sending) return;
     const time = nowTime();
     const userMessage = { id: `u-${Date.now()}`, from: 'user', text, time };
-    const reply = {
-      id: `o-${Date.now()}`,
-      from: 'oracle',
-      text: replies[messages.length % replies.length],
-      time,
-    };
     setDraft('');
-    setSessionsLeft((current) => Math.max(0, current - 1));
-    setMessages((current) => [...current, userMessage, reply]);
+    setSending(true);
+    setMessages((current) => [...current, userMessage]);
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd?.({ animated: true }));
+
+    try {
+      const response = await sendChatMessage({ assessmentId, message: text });
+      setSessionsLeft(Number.isFinite(response.repliesLeft) ? response.repliesLeft : Math.max(0, sessionsLeft - 1));
+      setMessages((current) => [
+        ...current,
+        {
+          id: `o-${Date.now()}`,
+          from: 'oracle',
+          text: response.reply,
+          time: nowTime(),
+        },
+      ]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        {
+          id: `e-${Date.now()}`,
+          from: 'oracle',
+          text: error?.message || 'Cenayang belum bisa menjawab saat ini. Coba lagi sebentar.',
+          time: nowTime(),
+        },
+      ]);
+    } finally {
+      setSending(false);
+      requestAnimationFrame(() => scrollRef.current?.scrollToEnd?.({ animated: true }));
+    }
   };
 
   return (
@@ -219,9 +221,9 @@ export function CenayangChatScreen({ scores = {}, classId, onBack }) {
                   <TextInput
                     value={draft}
                     onChangeText={setDraft}
-                    placeholder={exhausted ? 'Sesi konsultasi habis' : 'Tanyakan sesuatu...'}
+                    placeholder={exhausted ? 'Sesi konsultasi habis' : sending ? 'Cenayang membaca gulungan...' : 'Tanyakan sesuatu...'}
                     placeholderTextColor={colors.textMuted}
-                    editable={!exhausted}
+                    editable={!exhausted && !sending}
                     onSubmitEditing={send}
                     returnKeyType="send"
                     style={styles.input}
@@ -229,14 +231,14 @@ export function CenayangChatScreen({ scores = {}, classId, onBack }) {
                   <Pressable
                     accessibilityRole="button"
                     onPress={send}
-                    disabled={!draft.trim() || exhausted}
+                    disabled={!draft.trim() || exhausted || sending}
                     style={({ pressed }) => [
                       styles.sendButton,
-                      (!draft.trim() || exhausted) && styles.sendButtonDisabled,
+                      (!draft.trim() || exhausted || sending) && styles.sendButtonDisabled,
                       pressed && styles.sendButtonPressed,
                     ]}
                   >
-                    <SendIcon disabled={!draft.trim() || exhausted} />
+                    <SendIcon disabled={!draft.trim() || exhausted || sending} />
                   </Pressable>
                 </View>
               </View>
