@@ -52,7 +52,8 @@ func (c *OpenAIClient) GenerateChatReply(ctx context.Context, assessment domain.
 		Model:           model,
 		Instructions:    cenayangInstructions(),
 		Input:           buildChatContext(assessment, message),
-		MaxOutputTokens: 180,
+		MaxOutputTokens: 1000,
+		Reasoning:       &openAIReasoning{Effort: "medium"},
 	}
 	payload, err := json.Marshal(body)
 	if err != nil {
@@ -95,10 +96,15 @@ func (c *OpenAIClient) GenerateChatReply(ctx context.Context, assessment domain.
 }
 
 type openAIResponseRequest struct {
-	Model           string `json:"model"`
-	Instructions    string `json:"instructions"`
-	Input           string `json:"input"`
-	MaxOutputTokens int    `json:"max_output_tokens"`
+	Model           string           `json:"model"`
+	Instructions    string           `json:"instructions"`
+	Input           string           `json:"input"`
+	MaxOutputTokens int              `json:"max_output_tokens"`
+	Reasoning       *openAIReasoning `json:"reasoning,omitempty"`
+}
+
+type openAIReasoning struct {
+	Effort string `json:"effort"`
 }
 
 type openAIResponse struct {
