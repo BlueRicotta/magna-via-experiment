@@ -265,6 +265,45 @@ func TestChatMessageUsesGeneratorAndReplyLimit(t *testing.T) {
 	}
 }
 
+func TestChatMessageValidatesMessageLength(t *testing.T) {
+	app := testApp(t, WithChatSettings(true, 5), WithChatGenerator(fakeChatGenerator{}))
+	createReq, err := http.NewRequest(http.MethodPost, "/api/v1/assessments", bytes.NewReader(validAssessmentBody()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	createReq.Header.Set("Content-Type", "application/json")
+	createRes, err := app.Test(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer createRes.Body.Close()
+
+	var created struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(createRes.Body).Decode(&created); err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"/api/v1/chat/messages",
+		strings.NewReader(`{"assessmentId":"`+created.ID+`","message":"`+strings.Repeat("a", maxChatMessageLength+1)+`"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 for long chat message, got %d", res.StatusCode)
+	}
+}
+
 func TestChatMessageCanBeDisabled(t *testing.T) {
 	app := testApp(t, WithChatSettings(false, 5), WithChatGenerator(fakeChatGenerator{}))
 	req, err := http.NewRequest(

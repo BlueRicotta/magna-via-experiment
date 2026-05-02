@@ -21,6 +21,8 @@ import (
 	"magnavia/backend/internal/store"
 )
 
+const maxChatMessageLength = 100
+
 type Server struct {
 	store              store.AssessmentStore
 	adminToken         string
@@ -200,8 +202,12 @@ func (s *Server) chatMessage(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid JSON body")
 	}
-	if strings.TrimSpace(req.Message) == "" {
+	message := strings.TrimSpace(req.Message)
+	if message == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "message is required")
+	}
+	if len([]rune(message)) > maxChatMessageLength {
+		return fiber.NewError(fiber.StatusBadRequest, "message must be 100 characters or fewer")
 	}
 	if strings.TrimSpace(req.AssessmentID) == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "assessmentId is required")
@@ -223,7 +229,7 @@ func (s *Server) chatMessage(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusTooManyRequests, "chat reply limit reached")
 	}
 
-	reply, err := s.chatGenerator.GenerateChatReply(c.Context(), assessment, req.Message)
+	reply, err := s.chatGenerator.GenerateChatReply(c.Context(), assessment, message)
 	if err != nil {
 		log.Printf("chat generation failed for assessment %s: %v", req.AssessmentID, err)
 		return fiber.NewError(fiber.StatusBadGateway, "failed to generate chat reply: "+sanitizeUpstreamError(err.Error()))

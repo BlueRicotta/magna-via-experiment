@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -19,6 +21,7 @@ import { sendChatMessage } from '../services/api';
 import { colors, fonts, radii } from '../theme/tokens';
 
 const cenayangAvatar = require('../../assets/images/characters/cenayang-avatar.webp');
+const CHAT_MESSAGE_LIMIT = 100;
 
 function getBreakpoint(width) {
   if (width >= 960) return 'desktop';
@@ -91,6 +94,63 @@ function MessageBubble({ message, klass }) {
           </Text>
         </View>
         <Text style={[styles.time, !oracle && styles.timeUser]}>{message.time}</Text>
+      </View>
+    </View>
+  );
+}
+
+function TypingBubble({ klass }) {
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  const dots = [0, 1, 2].map((index) => ({
+    opacity: pulse.interpolate({
+      inputRange: [0, 0.2 + index * 0.18, 0.55 + index * 0.15, 1],
+      outputRange: [0.28, 0.28, 1, 0.28],
+    }),
+    translateY: pulse.interpolate({
+      inputRange: [0, 0.2 + index * 0.18, 0.55 + index * 0.15, 1],
+      outputRange: [0, 0, -4, 0],
+    }),
+  }));
+
+  return (
+    <View style={[styles.messageRow, styles.oracleRow]}>
+      <Image source={cenayangAvatar} resizeMode="cover" style={styles.messageAvatar} />
+      <View style={[styles.bubbleWrap, styles.oracleBubbleWrap]}>
+        <View style={[styles.bubble, styles.oracleBubble, styles.typingBubble, { borderColor: `${klass.color}88` }]}>
+          <View style={[styles.typingSigil, { backgroundColor: `${klass.color}22`, borderColor: `${klass.color}66` }]}>
+            <Text style={[styles.typingSigilText, { color: klass.color }]}>*</Text>
+          </View>
+          <Text style={styles.typingText}>Cenayang membaca gulungan</Text>
+          <View style={styles.typingDots}>
+            {dots.map((dot, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.typingDot,
+                  {
+                    backgroundColor: klass.color,
+                    opacity: dot.opacity,
+                    transform: [{ translateY: dot.translateY }],
+                  },
+                ]}
+              />
+            ))}
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -207,6 +267,7 @@ export function CenayangChatScreen({ assessmentId, scores = {}, classId, onBack 
                 {messages.map((message) => (
                   <MessageBubble key={message.id} message={message} klass={klass} />
                 ))}
+                {sending && <TypingBubble klass={klass} />}
               </ScrollView>
 
               <View style={styles.footer}>
@@ -221,6 +282,7 @@ export function CenayangChatScreen({ assessmentId, scores = {}, classId, onBack 
                   <TextInput
                     value={draft}
                     onChangeText={setDraft}
+                    maxLength={CHAT_MESSAGE_LIMIT}
                     placeholder={exhausted ? 'Sesi konsultasi habis' : sending ? 'Cenayang membaca gulungan...' : 'Tanyakan sesuatu...'}
                     placeholderTextColor={colors.textMuted}
                     editable={!exhausted && !sending}
@@ -228,6 +290,9 @@ export function CenayangChatScreen({ assessmentId, scores = {}, classId, onBack 
                     returnKeyType="send"
                     style={styles.input}
                   />
+                  {draft.length >= 80 && (
+                    <Text style={styles.inputCount}>{draft.length}/{CHAT_MESSAGE_LIMIT}</Text>
+                  )}
                   <Pressable
                     accessibilityRole="button"
                     onPress={send}
@@ -455,6 +520,46 @@ const styles = StyleSheet.create({
   userBubbleText: {
     color: colors.textPrimary,
   },
+  typingBubble: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    paddingRight: 16,
+    backgroundColor: 'rgba(28,22,42,0.98)',
+    shadowColor: '#c8a030',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+  },
+  typingSigil: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typingSigilText: {
+    fontFamily: fonts.displayBold,
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  typingText: {
+    color: colors.textSecondary,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingLeft: 2,
+  },
+  typingDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
   time: {
     color: colors.textMuted,
     fontFamily: fonts.bodySemiBold,
@@ -508,6 +613,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontFamily: fonts.body,
     fontSize: 15,
+  },
+  inputCount: {
+    minWidth: 42,
+    color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    textAlign: 'right',
   },
   sendButton: {
     width: 42,
