@@ -122,6 +122,7 @@ func TestCenayangInstructionsDiscourageRepetitiveFollowups(t *testing.T) {
 	for _, want := range []string{
 		"Jawab pertanyaan utama di kalimat pertama",
 		"jangan membuka dengan \"Halo\"",
+		"Gunakan bahasa Indonesia yang natural",
 		"Jangan menyuruh user mengisi quiz/kartu/hobby lagi",
 		"Berikan langkah kecil hanya jika",
 	} {
