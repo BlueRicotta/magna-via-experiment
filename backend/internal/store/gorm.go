@@ -55,7 +55,7 @@ type AssessmentModel struct {
 	ResultStrengths          StringSlice `gorm:"type:longtext"`
 	ResultMajors             StringSlice `gorm:"type:longtext"`
 
-	ChatReplies int `gorm:"not null;default:0"`
+	ChatReplies int
 }
 
 type StringSlice []string
