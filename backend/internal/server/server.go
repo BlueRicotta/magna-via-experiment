@@ -229,6 +229,7 @@ func (s *Server) chatMessage(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusTooManyRequests, "chat reply limit reached")
 	}
 
+	assessment.ChatReplies = count
 	reply, err := s.chatGenerator.GenerateChatReply(c.Context(), assessment, message)
 	if err != nil {
 		log.Printf("chat generation failed for assessment %s: %v", req.AssessmentID, err)

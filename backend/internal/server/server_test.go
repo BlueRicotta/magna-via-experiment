@@ -304,6 +304,55 @@ func TestChatMessageValidatesMessageLength(t *testing.T) {
 	}
 }
 
+func TestChatMessagePassesCurrentReplyCountToGenerator(t *testing.T) {
+	generator := &capturingChatGenerator{}
+	app := testApp(t, WithChatSettings(true, 5), WithChatGenerator(generator))
+	createReq, err := http.NewRequest(http.MethodPost, "/api/v1/assessments", bytes.NewReader(validAssessmentBody()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	createReq.Header.Set("Content-Type", "application/json")
+	createRes, err := app.Test(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer createRes.Body.Close()
+
+	var created struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(createRes.Body).Decode(&created); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 2; i++ {
+		req, err := http.NewRequest(
+			http.MethodPost,
+			"/api/v1/chat/messages",
+			strings.NewReader(`{"assessmentId":"`+created.ID+`","message":"cek hitungan"}`),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		res, err := app.Test(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d", res.StatusCode)
+		}
+	}
+
+	if len(generator.counts) != 2 {
+		t.Fatalf("expected 2 generator calls, got %d", len(generator.counts))
+	}
+	if generator.counts[0] != 0 || generator.counts[1] != 1 {
+		t.Fatalf("unexpected reply counts passed to generator: %v", generator.counts)
+	}
+}
+
 func TestChatMessageCanBeDisabled(t *testing.T) {
 	app := testApp(t, WithChatSettings(false, 5), WithChatGenerator(fakeChatGenerator{}))
 	req, err := http.NewRequest(
@@ -378,6 +427,15 @@ type fakeChatGenerator struct{}
 
 func (fakeChatGenerator) GenerateChatReply(_ context.Context, assessment domain.Assessment, message string) (string, error) {
 	return "Cenayang melihat jalur " + assessment.Result.Name + " untuk pertanyaan: " + message, nil
+}
+
+type capturingChatGenerator struct {
+	counts []int
+}
+
+func (g *capturingChatGenerator) GenerateChatReply(_ context.Context, assessment domain.Assessment, message string) (string, error) {
+	g.counts = append(g.counts, assessment.ChatReplies)
+	return "reply to " + message, nil
 }
 
 func TestAllowOriginHandlesCommaSeparatedValuesAndTrailingSlash(t *testing.T) {

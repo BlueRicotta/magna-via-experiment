@@ -117,6 +117,39 @@ func TestOpenAIClientRetriesWhenFirstResponseHasNoVisibleText(t *testing.T) {
 	}
 }
 
+func TestCenayangInstructionsDiscourageRepetitiveFollowups(t *testing.T) {
+	instructions := cenayangInstructions()
+	for _, want := range []string{
+		"Jawab pertanyaan utama di kalimat pertama",
+		"jangan membuka dengan \"Halo\"",
+		"Jangan menyuruh user mengisi quiz/kartu/hobby lagi",
+		"Berikan langkah kecil hanya jika",
+	} {
+		if !strings.Contains(instructions, want) {
+			t.Fatalf("expected instructions to contain %q", want)
+		}
+	}
+}
+
+func TestBuildChatContextIncludesReplyNumber(t *testing.T) {
+	context := buildChatContext(domain.Assessment{
+		ChatReplies:   2,
+		Scores:        domain.Scores{"R": 1, "I": 2, "A": 3, "S": 4, "E": 5, "C": 6},
+		TopDimensions: []string{"C", "S"},
+		Result: domain.ClassResult{
+			Name:          "The Scholar of Arcadia",
+			DominantLabel: "Conventional - Social",
+			Summary:       "Teliti dan komunikatif.",
+			Majors:        []string{"Sains Data"},
+		},
+		BirthStar:  "terra",
+		HobbyCards: []string{"scholar"},
+	}, "Apa itu Sains Data?")
+	if !strings.Contains(context, "Nomor balasan chat ini: 3") {
+		t.Fatalf("expected context to include reply number, got %q", context)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
