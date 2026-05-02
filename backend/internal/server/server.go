@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -224,7 +225,8 @@ func (s *Server) chatMessage(c *fiber.Ctx) error {
 
 	reply, err := s.chatGenerator.GenerateChatReply(c.Context(), assessment, req.Message)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadGateway, "failed to generate chat reply")
+		log.Printf("chat generation failed for assessment %s: %v", req.AssessmentID, err)
+		return fiber.NewError(fiber.StatusBadGateway, "failed to generate chat reply: "+sanitizeUpstreamError(err.Error()))
 	}
 	if err := s.store.IncrementChatReplyCount(c.Context(), req.AssessmentID); err != nil {
 		return err
@@ -234,6 +236,17 @@ func (s *Server) chatMessage(c *fiber.Ctx) error {
 		Reply:       reply,
 		RepliesLeft: max(0, s.chatReplyLimit-count-1),
 	})
+}
+
+func sanitizeUpstreamError(message string) string {
+	message = strings.TrimSpace(message)
+	if message == "" {
+		return "upstream error"
+	}
+	if len(message) > 180 {
+		message = message[:180]
+	}
+	return message
 }
 
 func (s *Server) adminSummary(c *fiber.Ctx) error {
