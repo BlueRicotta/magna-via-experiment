@@ -66,6 +66,7 @@ npm run api:dev:mysql
 Railway production environment:
 
 ```txt
+GO_VERSION=1.26.2
 DB_DRIVER=mysql
 DATABASE_DSN=user:pass@tcp(host:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
 ADMIN_TOKEN=change-this-token

@@ -164,7 +164,7 @@ function statusCopy(count) {
   if (count === 0) return 'Pilih setidaknya satu kartu untuk melanjutkan.';
   if (count === 1) return 'Satu kartu dipilih. Pilih lagi atau lanjutkan.';
   if (count === 2) return 'Dua kartu dipilih. Tambah satu lagi atau lanjutkan.';
-  return 'Tiga kartu telah dipilih. Sempurna.';
+  return 'Tiga kartu telah dipilih.';
 }
 
 export function HobbyCardsScreen({ selectedCards = [], onBack, onDone }) {
@@ -224,7 +224,7 @@ export function HobbyCardsScreen({ selectedCards = [], onBack, onDone }) {
           <View style={styles.intro}>
             <Text style={styles.eyebrow}>Step 05 - Kartu Hobi</Text>
             <Text style={[styles.title, breakpoint === 'desktop' && styles.titleDesktop]}>Pilih Jalurmu</Text>
-            <Text style={styles.subtitle}>Pilih hingga tiga Hobby Card yang mencerminkan dirimu.</Text>
+            <Text style={styles.subtitle}>Pilih 1-3 Hobby Card yang mencerminkan dirimu.</Text>
           </View>
 
           <View style={[styles.grid, { width: gridWidth, gap }]}>

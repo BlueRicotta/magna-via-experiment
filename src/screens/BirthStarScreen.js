@@ -153,7 +153,7 @@ function StarCard({ star, selected, dimmed, onPress, width }) {
 
 function statusText(selectedStar) {
   if (!selectedStar) return 'Pilih satu bintang untuk lanjut.';
-  return `Bintang ${selectedStar.name} berdenyut untukmu.`;
+  return `${selectedStar.name} berdenyut dalam nadimu.`;
 }
 
 export function BirthStarScreen({ value, onBack, onDone }) {

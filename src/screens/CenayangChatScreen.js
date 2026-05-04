@@ -239,7 +239,7 @@ export function CenayangChatScreen({ assessmentId, scores = {}, classId, onBack 
             </View>
             <View style={styles.identityText}>
               <Text style={styles.name}>Cenayang</Text>
-              <Text style={styles.presence}>Hadir untukmu</Text>
+              <Text style={styles.presence}>Siap mendengarkan ceritamu</Text>
             </View>
           </View>
           <View style={[styles.sessionPill, showWarning && styles.sessionPillLow]}>

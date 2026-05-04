@@ -179,7 +179,7 @@ export function ClassResultScreen({ scores = {}, onBack, onChat, onRestart }) {
               <View pointerEvents="none" style={[styles.portraitFrame, { borderColor: klass.color }]} />
             </View>
             <View style={styles.nameBlock}>
-              <Text style={styles.eyebrow}>Bintang Telah Berbicara</Text>
+              <Text style={styles.eyebrow}>Takdirmu Telah Berbicara</Text>
               <Text style={[styles.title, desktop && styles.titleDesktop]}>{klass.name}</Text>
               <Text style={[styles.flavor, { textShadowColor: klass.glow }]}>"{klass.flavor}"</Text>
             </View>

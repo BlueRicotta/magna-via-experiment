@@ -145,10 +145,10 @@ function Ceremony({ desktop }) {
       <View style={styles.quillWrap}>
         <QuillIcon size={desktop ? 52 : 42} />
       </View>
-      <Text style={styles.eyebrow}>Dewan Kerajaan Arcadia</Text>
+      <Text style={styles.eyebrow}>Selamat Datang di Arcadia</Text>
       <Text style={[styles.title, desktop && styles.titleDesktop]}>Daftarkan Dirimu</Text>
       <Text style={[styles.subtitle, desktop && styles.subtitleDesktop]}>
-        Sebelum memasuki Arcadia, perkenalkan dirimu kepada Dewan Kerajaan.
+        Sebelum memasuki Arcadia, perkenalkan siapa dirimu.
       </Text>
       <GoldFlourish />
       {desktop && (
@@ -227,7 +227,7 @@ export function BiodataScreen({ user, onBack, onDone }) {
               >
                 <View style={styles.formEyebrowRow}>
                   <View style={styles.formEyebrowLine} />
-                  <Text style={styles.formEyebrow}>GULUNGAN PENDAFTARAN</Text>
+                  <Text style={styles.formEyebrow}>Biodata</Text>
                   <View style={styles.formEyebrowLine} />
                 </View>
 
@@ -237,7 +237,7 @@ export function BiodataScreen({ user, onBack, onDone }) {
                       label="Nama Lengkap"
                       value={form.name}
                       onChangeText={(value) => setField('name', value)}
-                      placeholder="Nama lengkapmu..."
+                      placeholder="Nama lengkap atau panggilan"
                     />
                   </View>
 
@@ -306,13 +306,13 @@ export function BiodataScreen({ user, onBack, onDone }) {
                       {form.consent && <Text style={styles.consentCheck}>✓</Text>}
                     </View>
                     <Text style={styles.consentText}>
-                      Aku setuju data ini digunakan untuk menyimpan hasil perjalanan dan kebutuhan penelitian Magna Via.
+                      Aku setuju data ini digunakan untuk menyimpan hasil perjalanan dan kebutuhan penelitian Magna Via lebih lanjut.
                     </Text>
                   </Pressable>
                   <GoldButton onPress={submit} disabled={!valid} style={styles.submitButton}>
                     MASUK KE ARCADIA
                   </GoldButton>
-                  <Text style={styles.disclaimer}>Data dapat dilihat oleh admin Magna Via dan tidak digunakan di luar kebutuhan pengujian aplikasi.</Text>
+                  <Text style={styles.disclaimer}>Data dapat dilihat oleh admin Magna Via dan tidak akan digunakan di luar kebutuhan pengujian aplikasi.</Text>
                 </View>
               </LinearGradient>
 

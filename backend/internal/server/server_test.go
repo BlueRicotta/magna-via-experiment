@@ -126,6 +126,23 @@ func TestAdminSummaryRequiresTokenWhenConfigured(t *testing.T) {
 	}
 }
 
+func TestAdminSummaryFailsClosedWithoutCredentials(t *testing.T) {
+	app := testApp(t)
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/admin/summary", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401 when admin credentials are unset, got %d", res.StatusCode)
+	}
+}
+
 func TestAdminLoginReturnsBearerSession(t *testing.T) {
 	app := testApp(t, WithAdminAuth("oracle", "safe-password", "session-secret"))
 
@@ -375,7 +392,7 @@ func TestChatMessageCanBeDisabled(t *testing.T) {
 }
 
 func TestAdminAssessmentsReturnsSubmittedRows(t *testing.T) {
-	app := testApp(t)
+	app := testApp(t, WithAdminToken("secret"))
 	createReq, err := http.NewRequest(http.MethodPost, "/api/v1/assessments", bytes.NewReader(validAssessmentBody()))
 	if err != nil {
 		t.Fatal(err)
@@ -394,6 +411,7 @@ func TestAdminAssessmentsReturnsSubmittedRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	req.Header.Set("X-Admin-Token", "secret")
 	res, err := app.Test(req)
 	if err != nil {
 		t.Fatal(err)

@@ -331,9 +331,6 @@ func (s *Server) adminAssessments(c *fiber.Ctx) error {
 }
 
 func (s *Server) authorizedAdmin(c *fiber.Ctx) bool {
-	if s.effectiveAdminPassword() == "" && s.adminToken == "" {
-		return true
-	}
 	if s.adminToken != "" &&
 		subtle.ConstantTimeCompare([]byte(c.Get("X-Admin-Token")), []byte(s.adminToken)) == 1 {
 		return true

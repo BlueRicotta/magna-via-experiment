@@ -24,7 +24,7 @@ const scenes = [
     eyebrow: 'STEP I - ARCADIA',
     title: 'Sebuah kerajaan menanti.',
     dialogue:
-      'Selamat datang, Pejuang. Inilah Arcadia, kerajaan kuno tempat setiap nasib ditenun di antara bintang. Lama sekali kami menanti kedatanganmu.',
+      'Selamat datang, Pejuang. Inilah Arcadia, kerajaan kuno tempat setiap nasib lahir di antara bintang. Kami telah menanti kedatanganmu.',
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ const scenes = [
     eyebrow: 'STEP II - LANGIT',
     title: 'Bintang-bintang berbicara.',
     dialogue:
-      'Setiap pelajar lahir di bawah salah satu dari empat unsur: api, air, tanah, atau angin. Bintangmu telah memilih. Kini saatnya kau mendengarkan.',
+      'Setiap Pejuang lahir di bawah salah satu dari empat elemen: Api, Air, Tanah, atau Angin. Elemenmu akan dibaca. Kini saatnya kau mendengarkan.',
   },
   {
     id: 3,
@@ -40,7 +40,7 @@ const scenes = [
     eyebrow: 'STEP III - PANGGILAN',
     title: 'Dengarkan dengan saksama.',
     dialogue:
-      'Aku Cenayang, pembaca kode dan penjaga kunci langit. Akan kubacakan apa yang tertulis untukmu. Tapi pilihanmu tetap pilihanmu.',
+      'Aku Cenayang, pembaca kode dan penjaga kunci langit. Akan kubacakan apa yang tertulis untukmu. Tapi jalanmu tetap di tanganmu.',
   },
   {
     id: 4,
@@ -56,7 +56,7 @@ const scenes = [
     eyebrow: 'STEP V - GULUNGAN',
     title: 'Mari kita mulai membaca.',
     dialogue:
-      'Buka gulungan ini bersamaku. Beri tahu aku siapa dirimu, lalu kita biarkan bintang-bintang menuntun langkah pertamamu.',
+      'Pertama, aku ingin mendengarkan siapa dirimu.',
   },
 ];
 

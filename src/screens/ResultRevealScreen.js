@@ -121,7 +121,7 @@ export function ResultRevealScreen({ onDone }) {
         </View>
 
         <View style={[styles.copy, desktop && styles.copyDesktop]}>
-          <Text style={styles.status}>membaca resonansimu . . .</Text>
+          <Text style={styles.status}>membaca bintangmu . . .</Text>
           <View style={styles.divider} />
           <Text style={[styles.title, desktop && styles.titleDesktop]}>Takdirmu Sedang Terungkap</Text>
           <View style={styles.dots}>
@@ -134,7 +134,7 @@ export function ResultRevealScreen({ onDone }) {
 
       <View style={styles.ctaWrap}>
         <GoldButton onPress={continueToResult} disabled={pressed} style={styles.ctaButton}>
-          TAP UNTUK LANJUT
+          TEKAN UNTUK LANJUT
         </GoldButton>
       </View>
     </View>

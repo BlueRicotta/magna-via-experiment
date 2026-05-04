@@ -22,31 +22,31 @@ const questions = [
     title: 'Persimpangan Jalan',
     image: require('../../assets/images/questions/1.webp'),
     narrative:
-      'Setelah perjalanan panjang, kamu tiba di gerbang Kerajaan Timur bernama Arcadia. Seorang penjaga bertanya: "Apa tujuanmu datang ke sini, Petualang?"',
+      'Setelah perjalanan panjang, kamu tiba di gerbang Kerajaan Kuno bernama Arcadia. Seorang penjaga bertanya: "Apa tujuanmu datang ke sini, Petualang?"',
     choices: [
       ['A', 'Aku ingin bekerja keras dan membangun sesuatu yang nyata dengan tanganku sendiri.', 'R', 2],
       ['B', 'Aku ingin memahami rahasia dunia ini melalui pengetahuan dan penelitian.', 'I', 2],
-      ['C', 'Aku ingin mengekspresikan diri dan meninggalkan karya yang semua orang akan kenang.', 'A', 2],
-      ['D', 'Aku ingin membantu orang-orang yang lemah di kerajaan ini dan membuat mereka bahagia.', 'S', 2],
+      ['C', 'Aku ingin mengekspresikan diri dan meninggalkan mahakarya yang semua orang akan kenang.', 'A', 2],
+      ['D', 'Aku ingin menjadi penolong dan pelindung orang-orang lemah dan yang tidak mampu.', 'S', 2],
     ],
   },
   {
     id: 2,
     title: 'Tugas Kerajaan',
     image: require('../../assets/images/questions/2.webp'),
-    narrative: 'Kamu dipercayai untuk memilih suatu tugas dalam kerajaan, apa tugas yang akan kamu pilih?',
+    narrative: 'Kamu dipercayai untuk memilih suatu tugas dalam pertahanan kerajaan. Apa tugas yang akan kamu pilih?',
     choices: [
-      ['A', 'Memperbaiki bagian tembok benteng yang rusak.', 'R', 2],
-      ['B', 'Menganalisis kelemahan struktural benteng dan menyusun laporan.', 'I', 3],
+      ['A', 'Memperbaiki bagian tembok dan pertahanan yang rusak.', 'R', 2],
+      ['B', 'Menganalisis kelemahan dan kekurangan pertahanan, lalu melaporkannya.', 'I', 3],
       ['C', 'Memimpin dan mengorganisir para pekerja agar bekerja efisien.', 'E', 2],
-      ['D', 'Mencatat seluruh inventaris material dan membuat anggaran biaya.', 'C', 2],
+      ['D', 'Mencatat seluruh inventaris senjata dan membuat anggaran biaya.', 'C', 2],
     ],
   },
   {
     id: 3,
     title: 'Festival Kerajaan',
     image: require('../../assets/images/questions/3.webp'),
-    narrative: 'Festival tahunan Arcadia akan segera dimulai. Kamu diminta untuk berkontribusi. Apa yang kamu pilih?',
+    narrative: 'Festival tahunan Arcadia akan segera dimulai. Kamu diminta untuk berkontribusi. Apa yang kamu lakukan?',
     choices: [
       ['A', 'Menciptakan dekorasi, pertunjukan seni, atau musik untuk festival.', 'A', 2],
       ['B', 'Menjaga dan merawat lansia serta anak-anak selama festival berlangsung.', 'S', 2],
@@ -60,8 +60,8 @@ const questions = [
     image: require('../../assets/images/questions/4.webp'),
     narrative: 'Seekor naga dilaporkan mendekati desa yang tidak jauh dari posisimu, apa yang akan kamu lakukan?',
     choices: [
-      ['A', 'Langsung pergi ke garis depan medan dan menyiapkan pertahanan fisik.', 'R', 2],
-      ['B', 'Mencari literatur kuno tentang kelemahan dan perilaku naga tersebut.', 'I', 2],
+      ['A', 'Pergi ke desa dan menyiapkan pertahanan bersama penjaga desa.', 'R', 2],
+      ['B', 'Menganalisis pengetahuan kuno tentang kelemahan dan perilaku naga tersebut.', 'I', 2],
       ['C', 'Menulis syair atau cerita untuk menjaga semangat warga agar tidak panik.', 'A', 1],
       ['D', 'Mengumpulkan warga, memimpin evakuasi, dan menyusun strategi untuk keluar dari desa.', 'E', 3],
     ],
@@ -73,9 +73,9 @@ const questions = [
     narrative: 'Kamu menemukan sebuah peta tua di sebuah kastil yang kosong. Apa yang kamu lakukan?',
     choices: [
       ['A', 'Langsung berangkat sendiri menjelajahi lokasi yang ditunjuk peta.', 'R', 3],
-      ['B', 'Membagikan peta kepada para petualang lainnya yang mungkin membutuhkan informasinya.', 'S', 1],
+      ['B', 'Membagikan peta kepada para petualang lainnya yang haus akan petualangan.', 'S', 1],
       ['C', 'Merekrut tim, mengorganisir ekspedisi, dan memimpin perjalanan bersama.', 'E', 2],
-      ['D', 'Mempelajari peta dan membandingkannya dengan catatan geografis kerajaan.', 'C', 2],
+      ['D', 'Mempelajari peta dan menganalisis sejarah serta cerita dari lokasi tersebut.', 'C', 2],
     ],
   },
   {
@@ -86,8 +86,8 @@ const questions = [
     choices: [
       ['A', 'Menganalisis gejala-gejala yang ada secara sistematis untuk mencari penyebabnya.', 'I', 3],
       ['B', 'Menciptakan lagu atau ritual penyembuhan untuk mengangkat semangat warga.', 'A', 1],
-      ['C', 'Langsung merawat yang sakit dan menghibur keluarga yang berduka.', 'S', 2],
-      ['D', 'Mendokumentasikan pola penyebaran dan mengorganisir karantina.', 'C', 2],
+      ['C', 'Langsung merawat dan membantu yang sakit.', 'S', 2],
+      ['D', 'Mendokumentasikan pola dan mengorganisir karantina untuk menghentikan penyebaran penyakit.', 'C', 2],
     ],
   },
   {
@@ -107,12 +107,12 @@ const questions = [
     title: 'Badai di Perjalanan',
     image: require('../../assets/images/questions/8.webp'),
     narrative:
-      'Rombongan group-mu tersesat di hutan dalam kondisi badai. Semua orang panik. Kamu adalah yang paling tenang. Apa yang kamu lakukan?',
+      'Rombonganmu tersesat di hutan dalam kondisi badai. Semua orang panik. Apa yang kamu lakukan?',
     choices: [
       ['A', 'Membuka jalur baru secara acak melalui medan yang berat.', 'R', 2],
       ['B', 'Menentukan arah menggunakan bintang, peta, dan penanda alam.', 'I', 2],
       ['C', 'Mengambil alih kepemimpinan, menjaga semangat, dan membagikan tugas.', 'E', 2],
-      ['D', 'Mengikuti prosedur darurat yang tertulis dalam panduan perjalanan.', 'C', 2],
+      ['D', 'Mengikuti prosedur darurat seperti latihan yang pernah kamu lakukan.', 'C', 2],
     ],
   },
   {
@@ -159,7 +159,7 @@ const questions = [
     choices: [
       ['A', 'Laboratorium pribadi untuk penelitian dan eksperimen.', 'I', 2],
       ['B', 'Ruang kreatif terbuka untuk seni, musik, dan kerajinan bersama warga.', 'A', 2],
-      ['C', 'Kebun komunal yang bisa diakses dan dimanfaatkan seluruh warga desa.', 'S', 3],
+      ['C', 'Lahan terbuka yang bisa diakses dan dimanfaatkan seluruh warga desa.', 'S', 3],
       ['D', 'Lahan pertanian terstruktur dengan sistem irigasi dan pencatatan hasil panen.', 'C', 2],
     ],
   },
@@ -167,12 +167,12 @@ const questions = [
     id: 13,
     title: 'Malam Sebelum Pertempuran',
     image: require('../../assets/images/questions/13.webp'),
-    narrative: 'Besok adalah hari terpenting dalam perjalananmu di Arcadia. Malam ini, bagaimana kamu menghabiskan waktu?',
+    narrative: 'Besok adalah hari terberat dalam perjalananmu di Arcadia. Apa yang kamu lakukan untuk mempersiapkan besok?',
     choices: [
       ['A', 'Berlatih fisik dan mempertajam senjata hingga larut malam.', 'R', 2],
       ['B', 'Mempelajari catatan taktik dan strategi dari pertempuran masa lalu.', 'I', 2],
       ['C', 'Menulis surat atau syair untuk orang-orang yang kamu cintai.', 'A', 2],
-      ['D', 'Menghabiskan malam bersama rekan-rekan untuk saling menguatkan.', 'S', 2],
+      ['D', 'Menghabiskan malam bersama teman dan saling bertukar cerita.', 'S', 2],
     ],
   },
   {

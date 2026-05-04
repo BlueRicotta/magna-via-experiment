@@ -182,10 +182,10 @@ function Astrolabe({ size, onLaunch, launching }) {
   }, [spin]);
 
   const cardinals = [
-    { angle: -90, label: 'SEPTENTRIO' },
-    { angle: 0, label: 'ORIENS' },
-    { angle: 90, label: 'MERIDIES' },
-    { angle: 180, label: 'OCCIDENS' },
+    { angle: -90, label: 'IGNIS' },
+    { angle: 0, label: 'TERRA' },
+    { angle: 90, label: 'VENTUS' },
+    { angle: 180, label: 'AQUAE' },
   ];
 
   return (
@@ -391,26 +391,26 @@ export function SplashScreen({ onLaunch }) {
       <View style={[styles.content, breakpoint === 'desktop' && styles.contentDesktop]}>
         <View style={[styles.header, breakpoint !== 'desktop' && styles.headerCompact]}>
           <Text style={[styles.eyebrow, breakpoint !== 'desktop' && styles.eyebrowCompact]}>
-            * CODEX I - FOLIO PRIMUS *
+            * Warrior's Journey *
           </Text>
           <Text style={[styles.wordmark, breakpoint !== 'desktop' && styles.wordmarkCompact]}>
             MAGNA VIA
           </Text>
           <Text style={[styles.tagline, breakpoint !== 'desktop' && styles.taglineCompact]}>
-            Sebuah <Text style={styles.taglineEmphasis}>peta langit</Text> untuk jalanmu.
+            Perjalanan menuju <Text style={styles.taglineEmphasis}>Kemenangan</Text> untuk jalanmu.
           </Text>
         </View>
 
         <View style={styles.astrolabeWrap}>
           <Astrolabe size={discSize} launching={launching} onLaunch={handleLaunch} />
-          <Text style={styles.tapHint}>Ketuk peta bintang</Text>
+          <Text style={styles.tapHint}>Tekan untuk Mulai</Text>
         </View>
 
         <View style={styles.ctaWrap}>
           <GoldButton onPress={handleLaunch} disabled={launching}>
             MULAI PERJALANAN
           </GoldButton>
-          <Text style={styles.footnote}>* Untuk pelajar kelas 12 *</Text>
+        
         </View>
       </View>
     </View>
