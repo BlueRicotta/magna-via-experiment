@@ -13,6 +13,11 @@ import (
 	"magnavia/backend/internal/domain"
 )
 
+const (
+	defaultChatModel    = "gpt-4o-mini"
+	chatMaxOutputTokens = 420
+)
+
 type ChatGenerator interface {
 	GenerateChatReply(ctx context.Context, assessment domain.Assessment, message string) (string, error)
 }
@@ -41,20 +46,14 @@ func (c *OpenAIClient) GenerateChatReply(ctx context.Context, assessment domain.
 	}
 	model := c.model
 	if model == "" {
-		model = "gpt-5-nano"
+		model = defaultChatModel
 	}
 	baseURL := c.baseURL
 	if baseURL == "" {
 		baseURL = "https://api.openai.com/v1"
 	}
 
-	body := openAIResponseRequest{
-		Model:           model,
-		Instructions:    cenayangInstructions(),
-		Input:           buildChatContext(assessment, message),
-		MaxOutputTokens: 1000,
-		Reasoning:       &openAIReasoning{Effort: "medium"},
-	}
+	body := newChatResponseRequest(model, buildChatContext(assessment, message))
 
 	response, err := c.createResponse(ctx, baseURL, body)
 	if err != nil {
@@ -62,6 +61,10 @@ func (c *OpenAIClient) GenerateChatReply(ctx context.Context, assessment domain.
 	}
 	if text := response.replyText(); text != "" {
 		return text, nil
+	}
+
+	if body.Reasoning == nil {
+		return "", fmt.Errorf("openai returned an empty reply (%s)", response.debugSummary())
 	}
 
 	retryBody := body
@@ -107,6 +110,23 @@ func (c *OpenAIClient) createResponse(ctx context.Context, baseURL string, body 
 		return openAIResponse{}, fmt.Errorf("openai request failed with status %d", res.StatusCode)
 	}
 	return response, nil
+}
+
+func newChatResponseRequest(model string, input string) openAIResponseRequest {
+	request := openAIResponseRequest{
+		Model:           model,
+		Instructions:    cenayangInstructions(),
+		Input:           input,
+		MaxOutputTokens: chatMaxOutputTokens,
+	}
+	if supportsReasoning(model) {
+		request.Reasoning = &openAIReasoning{Effort: "minimal"}
+	}
+	return request
+}
+
+func supportsReasoning(model string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(model)), "gpt-5")
 }
 
 type openAIResponseRequest struct {

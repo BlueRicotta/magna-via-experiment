@@ -34,7 +34,7 @@ func Load() Config {
 		DatabaseDSN:        defaultDSN(driver),
 		CORSOrigins:        getenv("CORS_ORIGINS", "*"),
 		OpenAIAPIKey:       os.Getenv("OPENAI_API_KEY"),
-		OpenAIModel:        getenv("OPENAI_MODEL", "gpt-5-nano"),
+		OpenAIModel:        getenv("OPENAI_MODEL", "gpt-4o-mini"),
 		OpenAIBaseURL:      getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
 		ChatEnabled:        getenvBool("CHAT_ENABLED", true),
 		ChatReplyLimit:     getenvInt("CHAT_REPLY_LIMIT", 5),

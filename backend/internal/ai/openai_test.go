@@ -117,6 +117,29 @@ func TestOpenAIClientRetriesWhenFirstResponseHasNoVisibleText(t *testing.T) {
 	}
 }
 
+func TestNewChatResponseRequestUsesFastChatDefaults(t *testing.T) {
+	request := newChatResponseRequest("gpt-4o-mini", "Pertanyaan pengguna")
+	if request.Model != "gpt-4o-mini" {
+		t.Fatalf("unexpected model %q", request.Model)
+	}
+	if request.MaxOutputTokens != chatMaxOutputTokens {
+		t.Fatalf("expected max output tokens %d, got %d", chatMaxOutputTokens, request.MaxOutputTokens)
+	}
+	if request.Reasoning != nil {
+		t.Fatal("expected gpt-4o-mini request to omit reasoning")
+	}
+}
+
+func TestNewChatResponseRequestUsesMinimalReasoningForGPT5(t *testing.T) {
+	request := newChatResponseRequest("gpt-5-nano", "Pertanyaan pengguna")
+	if request.Reasoning == nil {
+		t.Fatal("expected gpt-5 request to include reasoning")
+	}
+	if request.Reasoning.Effort != "minimal" {
+		t.Fatalf("expected minimal reasoning, got %q", request.Reasoning.Effort)
+	}
+}
+
 func TestCenayangInstructionsDiscourageRepetitiveFollowups(t *testing.T) {
 	instructions := cenayangInstructions()
 	for _, want := range []string{
